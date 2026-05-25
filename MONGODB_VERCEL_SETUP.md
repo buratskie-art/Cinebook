@@ -34,6 +34,7 @@ api/email-log/index.js           -> /api/email-log
 api/users/index.js               -> /api/users
 api/preferences/index.js         -> /api/preferences
 api/local-storage/index.js       -> /api/local-storage
+api/init-db/index.js             -> /api/init-db
 ```
 
 Each endpoint maps to its own MongoDB collection, so the project files and database data are separated by purpose.
@@ -58,6 +59,12 @@ users
 preferences
 local_storage
 app_metadata
+```
+
+After redeploying, open this URL once to force-create every MongoDB collection:
+
+```text
+https://your-site.vercel.app/api/init-db
 ```
 
 The old compiled `app_state` collection is only used for one-time migration. When the API sees legacy `app_state` data, it moves that data into the organized collections and removes the legacy collection.

@@ -580,11 +580,21 @@ h2 {
 }
 
 .seat.selected {
-    background: linear-gradient(135deg, #ffeb3b 0%, #fbc02d 100%);
+    background: linear-gradient(135deg, #2f9e63 0%, #17653c 100%);
     transform: scale(1.1);
-    box-shadow: 0 8px 20px rgba(255, 235, 59, 0.6);
-    border-color: #ffeb3b;
+    box-shadow: 0 8px 20px rgba(47, 158, 99, 0.5);
+    border-color: #8fd8a8;
+    color: #fff;
+}
+
+.seat.pending {
+    background: linear-gradient(135deg, #ffeb3b 0%, #d89b28 100%);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    border-color: #f4d35e;
     color: #111;
+    opacity: 0.95;
 }
 
 .seat.taken {
@@ -594,6 +604,52 @@ h2 {
     box-shadow: none;
     border-color: #d32f2f;
     opacity: 0.6;
+}
+
+.seat.pending:hover,
+.seat.taken:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.seat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    margin: 14px auto 18px;
+    color: #eadfcb;
+    font-size: 13px;
+}
+
+.seat-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.legend-seat {
+    width: 18px;
+    height: 18px;
+    display: inline-block;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 244, 215, 0.25);
+}
+
+.legend-seat.available {
+    background: linear-gradient(135deg, #333 0%, #222 100%);
+}
+
+.legend-seat.selected {
+    background: linear-gradient(135deg, #2f9e63 0%, #17653c 100%);
+}
+
+.legend-seat.pending {
+    background: linear-gradient(135deg, #ffeb3b 0%, #d89b28 100%);
+}
+
+.legend-seat.reserved {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
 }
 
 /* Selected count/total smooth update (subtle) */
@@ -1076,13 +1132,23 @@ button:hover,
 }
 
 .seat.selected {
-    background: linear-gradient(180deg, #f5db8d 0%, #d2a346 100%) !important;
+    background: linear-gradient(180deg, #2f9e63 0%, #17653c 100%) !important;
+    border-color: #8fd8a8 !important;
+    color: #fff !important;
+}
+
+.seat.pending {
+    background: linear-gradient(180deg, #ffeb3b 0%, #d89b28 100%) !important;
+    border-color: #f4d35e !important;
     color: #190d0b !important;
+    cursor: not-allowed !important;
+    opacity: 0.96;
 }
 
 .seat.taken {
-    background: linear-gradient(180deg, #8a151b 0%, #42080b 100%) !important;
+    background: linear-gradient(180deg, #c42b35 0%, #741015 100%) !important;
     color: #f5d6d6 !important;
+    cursor: not-allowed !important;
 }
 
 /* Admin dashboard polish */

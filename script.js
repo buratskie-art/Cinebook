@@ -25,6 +25,7 @@ const SEAT_BLOCKS = ['A', 'B', 'C'];
 const SEAT_ROWS_PER_BLOCK = 8;
 const SEAT_COLUMNS_PER_BLOCK = 10;
 const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COLUMNS_PER_BLOCK;
+const BLOCKING_SEAT_STATUSES = new Set(['pending', 'payment_pending_review', 'confirmed']);
 
     function getSeatLabel(block, row, column) {
         return `${block}${row}${column}`;
@@ -32,6 +33,12 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
 
     function normalizeSeatId(seat) {
         return String(seat);
+    }
+
+    function getSeatLockStatus(bookingStatus) {
+        if (bookingStatus === 'confirmed') return 'confirmed';
+        if (bookingStatus === 'pending' || bookingStatus === 'payment_pending_review') return 'pending';
+        return '';
     }
 
     function getDefaultMovies() {
@@ -196,20 +203,21 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
         }
     }
 
-    function readReservedSeats(movieKey) {
+    function readSeatStatuses(movieKey) {
         try {
             const reservations = JSON.parse(localStorage.getItem(LS_RESERVATIONS) || '[]');
-            const reserved = new Set();
+            const statuses = new Map();
             reservations.forEach(res => {
                 const key = toFileName(res.movie || '');
                 if (!movieKey || key !== movieKey) return;
-                if (res.status === 'confirmed' && Array.isArray(res.seats)) {
-                    res.seats.forEach(num => reserved.add(normalizeSeatId(num)));
+                const lockStatus = getSeatLockStatus(res.status);
+                if (lockStatus && Array.isArray(res.seats)) {
+                    res.seats.forEach(num => statuses.set(normalizeSeatId(num), lockStatus));
                 }
             });
-            return reserved;
+            return statuses;
         } catch {
-            return new Set();
+            return new Map();
         }
     }
 
@@ -218,12 +226,12 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
         if (!container) return;
         container.innerHTML = "";
         const saved = movieKey ? readSavedSeats(movieKey) : null;
-        const reserved = movieKey ? readReservedSeats(movieKey) : new Set();
-        renderSeatMap(container, reserved, saved, () => updateSeat(movieKey));
+        const seatStatuses = movieKey ? readSeatStatuses(movieKey) : new Map();
+        renderSeatMap(container, seatStatuses, saved, () => updateSeat(movieKey));
         updateSeat(movieKey);
     }
 
-    function renderSeatMap(container, reservedSeats, savedSeats, onSeatChange) {
+    function renderSeatMap(container, seatStatuses, savedSeats, onSeatChange) {
         const fragment = document.createDocumentFragment();
         const map = document.createElement('div');
         map.className = 'seat-map';
@@ -291,16 +299,18 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
                     seat.setAttribute('aria-label', `Seat ${seatId}`);
                     seat.setAttribute('aria-pressed', 'false');
 
-                    if (reservedSeats.has(seatId)) {
-                        seat.classList.add('taken');
+                    const lockStatus = seatStatuses.get(seatId);
+                    if (lockStatus) {
+                        seat.classList.add(lockStatus === 'confirmed' ? 'taken' : 'pending');
                         seat.setAttribute('aria-disabled', 'true');
+                        seat.setAttribute('title', lockStatus === 'confirmed' ? 'Reserved' : 'Pending payment verification');
                     } else if (savedSeats && savedSeats.has(seatId)) {
                         seat.classList.add('selected');
                         seat.setAttribute('aria-pressed', 'true');
                     }
 
                     seat.addEventListener('click', function () {
-                        if (this.classList.contains('taken')) return;
+                        if (this.classList.contains('taken') || this.classList.contains('pending')) return;
                         this.classList.toggle('selected');
                         this.setAttribute('aria-pressed', this.classList.contains('selected'));
                         onSeatChange();
@@ -403,7 +413,7 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
 
         reservations.forEach(booking => {
             if (booking.showtime && (booking.showtime.id == showtimeId || String(booking.showtime.id) === String(showtimeId)) &&
-                booking.status === 'confirmed') {
+                BLOCKING_SEAT_STATUSES.has(booking.status)) {
                 booking.seats.forEach(seat => bookedSeats.add(normalizeSeatId(seat)));
             }
         });
@@ -554,16 +564,17 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
         container.innerHTML = '';
 
         const reservations = JSON.parse(localStorage.getItem(LS_RESERVATIONS) || '[]');
-        const reservedSeats = new Set();
+        const seatStatuses = new Map();
 
         reservations.forEach(booking => {
             if (booking.showtime && (booking.showtime.id == showtimeId || String(booking.showtime.id) === String(showtimeId)) &&
-                booking.status === 'confirmed') {
-                booking.seats.forEach(seat => reservedSeats.add(normalizeSeatId(seat)));
+                BLOCKING_SEAT_STATUSES.has(booking.status)) {
+                const lockStatus = getSeatLockStatus(booking.status);
+                booking.seats.forEach(seat => seatStatuses.set(normalizeSeatId(seat), lockStatus));
             }
         });
 
-        renderSeatMap(container, reservedSeats, null, () => updateSeatForShowtime(showtimeId));
+        renderSeatMap(container, seatStatuses, null, () => updateSeatForShowtime(showtimeId));
         updateSeatForShowtime(showtimeId);
     }
     
@@ -1143,7 +1154,7 @@ CineBook Admin
         return `
             <div class="payment-note">
                 <strong>Payment instructions:</strong><br>
-                Send PHP ${res.price} to GCash +63 912 345 6789 under CineBook Demo. After sending, click Pay / Upload Receipt and submit your GCash reference number, sender name, and screenshot receipt.
+                Send PHP ${res.price} to GCash +63 912 345 6789 under CineBook Demo. After sending, click Pay / Upload Receipt and submit your GCash reference number, sender name, and screenshot receipt. Seats are blocked while payment or admin verification is pending.
             </div>
         `;
     }
@@ -2169,7 +2180,7 @@ function approvePaymentSubmission(submissionId, bookingId) {
 
     const conflictingBooking = reservations.find(existing =>
         existing.id !== booking.id &&
-        existing.status === 'confirmed' &&
+        BLOCKING_SEAT_STATUSES.has(existing.status) &&
         existing.showtime &&
         booking.showtime &&
         String(existing.showtime.id) === String(booking.showtime.id) &&
@@ -2179,7 +2190,7 @@ function approvePaymentSubmission(submissionId, bookingId) {
     );
 
     if (conflictingBooking) {
-        alert(`Cannot approve this payment because one or more seats are already confirmed in booking #${conflictingBooking.id}. Reject this submission or ask the user to choose another seat.`);
+        alert(`Cannot approve this payment because one or more seats are already blocked in booking #${conflictingBooking.id}. Reject this submission or ask the user to choose another seat.`);
         return;
     }
 
@@ -2525,7 +2536,7 @@ function getAvailableSeatsForShowtime(showtimeId) {
 
     reservations.forEach(booking => {
         if (booking.showtime && String(booking.showtime.id) === String(showtimeId) &&
-            booking.status === 'confirmed') {
+            BLOCKING_SEAT_STATUSES.has(booking.status)) {
             booking.seats.forEach(seat => bookedSeats.add(String(seat)));
         }
     });

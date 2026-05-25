@@ -47,8 +47,14 @@
         <h2>Select Your Seats</h2>
         <p>Selected: <span id="count">0</span> seats | Total: ₱<span id="total">0</span></p>
         <p style="color: #999; font-size: 13px;">Capacity: 240 seats in Blocks A, B, and C</p>
+        <div class="seat-legend">
+            <span><i class="legend-seat available"></i> Available</span>
+            <span><i class="legend-seat selected"></i> Selected</span>
+            <span><i class="legend-seat pending"></i> Pending Verification</span>
+            <span><i class="legend-seat reserved"></i> Reserved</span>
+        </div>
         <div class="seats" id="seatContainer"></div>
-        <button onclick="confirmBooking()">Confirm Booking</button>
+        <button onclick="confirmBooking()">Proceed to Payment Instructions</button>
     </div>
 
     <script src="database.js"></script>

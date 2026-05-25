@@ -10,7 +10,7 @@ MONGODB_DB=cinebook
 MONGODB_COLLECTION=app_state
 ```
 
-`MONGODB_COLLECTION` is optional. If you do not set it, the app uses `app_state`.
+`MONGODB_COLLECTION` is optional and is now only used as a legacy fallback for older single-document data.
 
 ## 2. Deploy
 
@@ -31,7 +31,25 @@ After deployment:
 3. Go to **Settings**.
 4. Click **Sync to MongoDB**.
 
-That button overwrites the CineBook document in MongoDB with the current browser data: movies, theaters, showtimes, reservations, payments, payment submissions, email logs, user info, preferences, and a full `state.localStorage` dump.
+That button overwrites the organized CineBook collections in MongoDB with the current browser data.
+
+The API writes data into these collections:
+
+```text
+movies
+theaters
+showtimes
+reservations
+payments
+payment_submissions
+email_log
+users
+preferences
+local_storage
+app_metadata
+```
+
+The old `app_state` collection can stay in MongoDB as backup data. New syncs use the organized collections above.
 
 If your needed data exists in a different browser origin, open `local-storage-migration.html` in that same browser, set the API URL to your deployed `/api/state`, and click **Move Local Storage to MongoDB**.
 

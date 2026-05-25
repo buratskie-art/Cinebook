@@ -1744,6 +1744,24 @@ header {
     background: rgba(255, 244, 215, 0.04);
 }
 
+.payment-note {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid rgba(215, 173, 80, 0.28);
+    border-left: 4px solid #d7ad50;
+    border-radius: 8px;
+    background: rgba(255, 244, 215, 0.055);
+    color: #eadfcb;
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: left;
+}
+
+.button-group button:disabled {
+    cursor: default;
+    opacity: 0.72;
+}
+
 .terms-check {
     display: flex;
     gap: 10px;
@@ -2207,7 +2225,7 @@ header {
 body:has(.curtain-valance) {
     background:
         linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.78)),
-        url("assets/theatre-curtain-bg.png") center top / cover no-repeat fixed,
+        url("assets/theatre-curtain-bg.png?v=full-red-curtain") center top / cover no-repeat fixed,
         #050303 !important;
 }
 

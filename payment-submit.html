@@ -322,8 +322,9 @@
                         <li>Send the payment amount to the GCash number below</li>
                         <li>Wait for payment confirmation from the GCash sender</li>
                         <li>Note down the transaction reference number</li>
-                        <li>Upload proof of payment (screenshot) on this page</li>
-                        <li>Submit the payment details for verification</li>
+                        <li>Return to this page from your dashboard</li>
+                        <li>Upload the GCash receipt screenshot below</li>
+                        <li>Submit the receipt details for admin verification</li>
                     </ol>
                 </div>
 
@@ -340,10 +341,10 @@
 
             <!-- Proof of Payment Section -->
             <div class="payment-section">
-                <h2>📸 Submit Proof of Payment</h2>
+                <h2>Submit Payment Receipt</h2>
 
                 <div class="form-group">
-                    <label for="paymentProofFile">Upload Screenshot / Proof Document</label>
+                    <label for="paymentProofFile">Upload GCash Receipt Screenshot / Document Here</label>
                     <div class="file-upload-wrapper">
                         <label for="paymentProofFile" class="file-upload-label">
                             <div class="file-upload-text">
@@ -374,7 +375,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="btn-submit" onclick="submitPaymentProof()">Submit Payment Proof</button>
+                    <button class="btn-submit" onclick="submitPaymentProof()">Submit Receipt for Review</button>
                     <button class="btn-cancel" onclick="cancelPayment()">Cancel Booking</button>
                 </div>
             </div>
@@ -399,12 +400,12 @@
             let booking = null;
 
             if (pendingBookingId) {
-                booking = reservations.find(r => r.id == pendingBookingId && r.status === 'pending');
+                booking = reservations.find(r => r.id == pendingBookingId && (r.status === 'pending' || r.status === 'payment_rejected'));
             }
 
             if (!booking) {
                 const currentUser = localStorage.getItem('cinebook:user');
-                booking = reservations.find(r => r.username === currentUser && r.status === 'pending');
+                booking = reservations.find(r => r.username === currentUser && (r.status === 'pending' || r.status === 'payment_rejected'));
                 if (booking) {
                     localStorage.setItem('cinebook:pendingBookingId', booking.id);
                 }
@@ -505,10 +506,6 @@
                     booking.submissionId = paymentSubmission.id;
                 }
                 localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
-
-                if (typeof window.sendPaymentSubmittedEmail === 'function') {
-                    window.sendPaymentSubmittedEmail(booking, paymentSubmission);
-                }
 
                 showAlert('Payment proof submitted successfully! Admin will review within 24 hours.', 'success');
                 localStorage.removeItem('cinebook:pendingBookingId');

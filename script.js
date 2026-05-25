@@ -203,8 +203,7 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
             reservations.forEach(res => {
                 const key = toFileName(res.movie || '');
                 if (!movieKey || key !== movieKey) return;
-                // Include both confirmed bookings AND pending bookings (locked seats)
-                if ((res.status === 'confirmed' || res.status === 'pending' || res.status === 'payment_pending_review') && Array.isArray(res.seats)) {
+                if (res.status === 'confirmed' && Array.isArray(res.seats)) {
                     res.seats.forEach(num => reserved.add(normalizeSeatId(num)));
                 }
             });
@@ -404,7 +403,7 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
 
         reservations.forEach(booking => {
             if (booking.showtime && (booking.showtime.id == showtimeId || String(booking.showtime.id) === String(showtimeId)) &&
-                (booking.status === 'confirmed' || booking.status === 'pending' || booking.status === 'payment_pending_review')) {
+                booking.status === 'confirmed') {
                 booking.seats.forEach(seat => bookedSeats.add(normalizeSeatId(seat)));
             }
         });
@@ -559,7 +558,7 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
 
         reservations.forEach(booking => {
             if (booking.showtime && (booking.showtime.id == showtimeId || String(booking.showtime.id) === String(showtimeId)) &&
-                (booking.status === 'confirmed' || booking.status === 'pending' || booking.status === 'payment_pending_review')) {
+                booking.status === 'confirmed') {
                 booking.seats.forEach(seat => reservedSeats.add(normalizeSeatId(seat)));
             }
         });
@@ -1051,90 +1050,17 @@ CineBook Admin
         localStorage.setItem(LS_RESERVATIONS, JSON.stringify(reservations));
         localStorage.setItem('cinebook:pendingBookingId', bookingId);
 
-        // Don't clear seat selection - seats are now specific to this showtime
-        sendEmailNotification(booking);
-
-        alert(`Booking Created! (Booking ID: #${bookingId})\n\nProceeding to payment page...\n\nYou have 30 minutes to submit payment proof.`);
-        location.href = "payment-submit.html";
+        alert(`Reservation Created! (Booking ID: #${bookingId})\n\nOpen your dashboard to view payment instructions and upload your receipt.\n\nYour seats are confirmed only after admin approval.`);
+        location.href = "dashboard.html";
     }
 
     function sendEmailNotification(booking) {
-        const emailLog = {
-            id: Date.now(),
-            to: getUserEmail(booking.username),
-            subject: `CineBook Payment Required - Booking #${booking.id}`,
-            body: `
-Dear ${localStorage.getItem(LS_USER)},
-
-Your booking is confirmed! Please complete payment within 30 minutes.
-
-=== BOOKING DETAILS ===
-Booking ID: #${booking.id}
-Movie: ${booking.movie}
-${booking.showtime ? `Theater: ${booking.showtime.theater}
-Showtime: ${booking.showtime.dateTime}` : ''}
-Seats: ${booking.seats.join(', ')}
-Price per Seat: ₱${booking.pricePerSeat}
-Total Amount: ₱${booking.price}
-Deadline: ${new Date(booking.paymentDeadline).toLocaleString()}
-
-=== PAYMENT INSTRUCTIONS ===
-Send payment to GCash: +63 912 345 6789 (CineBook Demo)
-Amount: ₱${booking.price}
-After sending, upload proof of payment on the website.
-
-=== NEXT STEPS ===
-1. Visit: payment-submit.html
-2. Upload GCash screenshot
-3. Provide reference number
-4. Submit for verification
-
-Seats are reserved temporarily. If payment is not submitted within 30 minutes, your booking will be automatically cancelled and seats released.
-
-Thank you!
-CineBook Admin
-            `,
-            sentAt: new Date().toLocaleString(),
-            status: 'queued',
-            type: 'booking_payment_required',
-            bookingId: booking.id
-        };
-
-        sendCineBookEmail(emailLog);
+        return false;
     }
 
     function sendPaymentSubmittedEmail(booking, submission) {
-        if (!booking) return;
-        sendCineBookEmail({
-            id: Date.now(),
-            to: getUserEmail(booking.username),
-            subject: `CineBook Payment Submitted - Booking #${booking.id}`,
-            body: `
-Dear ${booking.username || 'CineBook customer'},
-
-We received your payment proof and it is now waiting for admin review.
-
-=== PAYMENT SUBMISSION ===
-Booking ID: #${booking.id}
-Movie: ${booking.movie}
-Reference Number: ${submission.referenceNumber}
-Sender Name: ${submission.senderName}
-Submitted At: ${submission.submittedAt}
-Amount: PHP ${booking.price}
-
-We will send another email after your payment is approved or rejected.
-
-Thank you!
-CineBook Admin
-            `,
-            sentAt: new Date().toLocaleString(),
-            status: 'queued',
-            type: 'payment_submitted',
-            bookingId: booking.id,
-            submissionId: submission.id
-        });
+        return false;
     }
-
 
     // Show login popover (keeps signature expected by index.html). Simple redirect for now.
     function showLoginPopover(anchor) {
@@ -1173,6 +1099,8 @@ CineBook Admin
         const username = localStorage.getItem(LS_USER);
         const profileUsername = document.getElementById('profileUsername');
         if (profileUsername) profileUsername.textContent = username || 'Guest User';
+        const profileEmail = document.getElementById('profileEmail');
+        if (profileEmail) profileEmail.textContent = localStorage.getItem(LS_EMAIL) || 'No verified email';
 
         // Update stats
         const reservations = JSON.parse(localStorage.getItem(LS_PREFIX + 'reservations') || '[]');
@@ -1204,6 +1132,37 @@ CineBook Admin
         loadTabContent('overview');
     }
 
+    function getReservationStatusClass(status) {
+        if (status === 'confirmed') return 'status-confirmed';
+        if (status === 'payment_rejected' || status === 'payment_expired' || status === 'cancelled') return 'status-cancelled';
+        return 'status-pending';
+    }
+
+    function getPaymentInstructions(res) {
+        if (res.status !== 'pending' && res.status !== 'payment_rejected') return '';
+        return `
+            <div class="payment-note">
+                <strong>Payment instructions:</strong><br>
+                Send PHP ${res.price} to GCash +63 912 345 6789 under CineBook Demo. After sending, click Pay / Upload Receipt and submit your GCash reference number, sender name, and screenshot receipt.
+            </div>
+        `;
+    }
+
+    function getReservationAction(res) {
+        if (res.status === 'pending' || res.status === 'payment_rejected') {
+            return `<button class="btn-primary" onclick="payReservation(${res.id})">Pay / Upload Receipt</button>`;
+        }
+        if (res.status === 'payment_pending_review') {
+            return `<button class="btn-primary" disabled>Receipt Under Review</button>`;
+        }
+        return `<button class="btn-primary" onclick="alert('Viewing details for ${res.movie}')">View</button>`;
+    }
+
+    function payReservation(resId) {
+        localStorage.setItem('cinebook:pendingBookingId', resId);
+        location.href = 'payment-submit.html';
+    }
+
     function loadTabContent(tabName) {
         const reservations = JSON.parse(localStorage.getItem(LS_PREFIX + 'reservations') || '[]');
         const payments = JSON.parse(localStorage.getItem(LS_PREFIX + 'payments') || '[]');
@@ -1227,7 +1186,8 @@ CineBook Admin
                             ${res.showtime ? `<div class="movie-details">Theater: ${res.showtime.theater}</div>` : ''}
                             ${res.showtime ? `<div class="movie-details">Showtime: ${res.showtime.dateTime}</div>` : ''}
                             <div class="price">₱${res.price}</div>
-                            <span class="status-badge status-confirmed">${res.status}</span>
+                            <span class="status-badge ${getReservationStatusClass(res.status)}">${res.status}</span>
+                            ${getPaymentInstructions(res)}
                         </div>
                     `).join('');
                 }
@@ -1251,10 +1211,11 @@ CineBook Admin
                             ${res.showtime ? `<div class="movie-details">Theater: ${res.showtime.theater}</div>` : ''}
                             ${res.showtime ? `<div class="movie-details">Showtime: ${res.showtime.dateTime}</div>` : ''}
                             <div class="price">₱${res.price}</div>
-                            <span class="status-badge status-confirmed">${res.status}</span>
+                            <span class="status-badge ${getReservationStatusClass(res.status)}">${res.status}</span>
+                            ${getPaymentInstructions(res)}
                             <div class="button-group">
-                                <button class="btn-primary" onclick="alert('Viewing details for ${res.movie}')">View</button>
-                                <button class="btn-danger" onclick="cancelReservation(${res.id})">Cancel</button>
+                                ${getReservationAction(res)}
+                                ${res.status === 'confirmed' ? '' : `<button class="btn-danger" onclick="cancelReservation(${res.id})">Cancel</button>`}
                             </div>
                         </div>
                     `).join('');
@@ -1406,7 +1367,7 @@ CineBook Admin
         let updated = false;
 
         reservations.forEach(booking => {
-            if ((booking.status === 'pending' || booking.status === 'payment_pending_review') && booking.paymentDeadline) {
+            if (booking.status === 'pending' && booking.paymentDeadline) {
                 if (now > booking.paymentDeadline) {
                     booking.status = 'payment_expired';
                     booking.expiredAt = new Date().toLocaleString();
@@ -1458,6 +1419,7 @@ CineBook Admin
         requestPasswordReset,
         resetPasswordWithOtp,
         toggleForgotPassword,
+        payReservation,
         checkExpiredPayments,
         togglePasswordVisibility,
         nextSlide,
@@ -1494,6 +1456,7 @@ window.sendPaymentSubmittedEmail = CineBook.sendPaymentSubmittedEmail;
 window.requestPasswordReset = CineBook.requestPasswordReset;
 window.resetPasswordWithOtp = CineBook.resetPasswordWithOtp;
 window.toggleForgotPassword = CineBook.toggleForgotPassword;
+window.payReservation = CineBook.payReservation;
 
 // ========== ADMIN PANEL FUNCTIONS ==========
 
@@ -2189,16 +2152,41 @@ function reviewPaymentSubmission(submissionId, bookingId) {
 function approvePaymentSubmission(submissionId, bookingId) {
     if (!confirm('Approve this payment? The booking will be confirmed and seats locked.')) return;
     
-    // Update submission status
     let submissions = JSON.parse(localStorage.getItem('cinebook:paymentSubmissions') || '[]');
     const submission = submissions.find(s => s.id === submissionId);
-    submission.status = 'approved';
-    submission.approvedAt = new Date().toLocaleString();
-    localStorage.setItem('cinebook:paymentSubmissions', JSON.stringify(submissions));
+    if (!submission) {
+        alert('Payment submission not found.');
+        return;
+    }
     
     // Update booking status to confirmed
     let reservations = JSON.parse(localStorage.getItem('cinebook:reservations') || '[]');
     const booking = reservations.find(b => b.id === bookingId);
+    if (!booking) {
+        alert('Booking not found.');
+        return;
+    }
+
+    const conflictingBooking = reservations.find(existing =>
+        existing.id !== booking.id &&
+        existing.status === 'confirmed' &&
+        existing.showtime &&
+        booking.showtime &&
+        String(existing.showtime.id) === String(booking.showtime.id) &&
+        Array.isArray(existing.seats) &&
+        Array.isArray(booking.seats) &&
+        existing.seats.some(seat => booking.seats.map(String).includes(String(seat)))
+    );
+
+    if (conflictingBooking) {
+        alert(`Cannot approve this payment because one or more seats are already confirmed in booking #${conflictingBooking.id}. Reject this submission or ask the user to choose another seat.`);
+        return;
+    }
+
+    submission.status = 'approved';
+    submission.approvedAt = new Date().toLocaleString();
+    localStorage.setItem('cinebook:paymentSubmissions', JSON.stringify(submissions));
+
     booking.status = 'confirmed';
     booking.paidAt = new Date().toLocaleString();
     localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
@@ -2222,19 +2210,20 @@ function approvePaymentSubmission(submissionId, bookingId) {
         window.sendCineBookEmail({
             id: Date.now() + 1,
             to: getRecipientEmail(booking.username),
-            subject: `CineBook Payment Approved - Booking #${booking.id}`,
+            subject: `CineBook Receipt - Booking #${booking.id}`,
             body: `
 Dear ${booking.username || 'CineBook customer'},
 
-Your payment has been approved and your booking is now confirmed.
+This is your official CineBook receipt. Your payment has been approved and your seats are now confirmed.
 
-=== CONFIRMED BOOKING ===
+=== RECEIPT DETAILS ===
 Booking ID: #${booking.id}
 Movie: ${booking.movie}
 ${booking.showtime ? `Theater: ${booking.showtime.theater}
 Showtime: ${booking.showtime.dateTime}` : ''}
 Seats: ${Array.isArray(booking.seats) ? booking.seats.join(', ') : ''}
 Total Amount: PHP ${booking.price}
+Payment Method: Manual GCash
 Paid At: ${booking.paidAt}
 
 Please show your booking details at the theatre.
@@ -2244,7 +2233,7 @@ CineBook Admin
             `,
             sentAt: new Date().toLocaleString(),
             status: 'queued',
-            type: 'payment_approved',
+            type: 'receipt',
             bookingId: booking.id,
             submissionId
         });
@@ -2274,35 +2263,7 @@ function rejectPaymentSubmission(submissionId, bookingId) {
     booking.rejectionReason = reason;
     localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
 
-    if (typeof window.sendCineBookEmail === 'function') {
-        window.sendCineBookEmail({
-            id: Date.now() + 1,
-            to: getRecipientEmail(booking.username),
-            subject: `CineBook Payment Rejected - Booking #${booking.id}`,
-            body: `
-Dear ${booking.username || 'CineBook customer'},
-
-Your payment proof was reviewed, but it could not be approved.
-
-=== REJECTION DETAILS ===
-Booking ID: #${booking.id}
-Movie: ${booking.movie}
-Reason: ${reason}
-
-Please submit a new valid payment proof before your reservation expires.
-
-Thank you!
-CineBook Admin
-            `,
-            sentAt: new Date().toLocaleString(),
-            status: 'queued',
-            type: 'payment_rejected',
-            bookingId: booking.id,
-            submissionId
-        });
-    }
-    
-    alert('Payment rejected. User will be notified to resubmit.');
+    alert('Payment rejected. The user can resubmit a receipt from the dashboard.');
     closeReviewModal();
     loadPaymentsList();
 }
@@ -2564,7 +2525,7 @@ function getAvailableSeatsForShowtime(showtimeId) {
 
     reservations.forEach(booking => {
         if (booking.showtime && String(booking.showtime.id) === String(showtimeId) &&
-            (booking.status === 'confirmed' || booking.status === 'pending' || booking.status === 'payment_pending_review')) {
+            booking.status === 'confirmed') {
             booking.seats.forEach(seat => bookedSeats.add(String(seat)));
         }
     });

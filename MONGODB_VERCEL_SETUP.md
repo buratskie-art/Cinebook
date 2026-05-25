@@ -21,19 +21,19 @@ Vercel will install the `mongodb` dependency from `package.json` and expose the 
 /api/state
 ```
 
-The project also has separate API files for each data group:
+The project also has separate API folders for each data group:
 
 ```text
-/api/movies
-/api/theaters
-/api/showtimes
-/api/reservations
-/api/payments
-/api/payment-submissions
-/api/email-log
-/api/users
-/api/preferences
-/api/local-storage
+api/movies/index.js              -> /api/movies
+api/theaters/index.js            -> /api/theaters
+api/showtimes/index.js           -> /api/showtimes
+api/reservations/index.js        -> /api/reservations
+api/payments/index.js            -> /api/payments
+api/payment-submissions/index.js -> /api/payment-submissions
+api/email-log/index.js           -> /api/email-log
+api/users/index.js               -> /api/users
+api/preferences/index.js         -> /api/preferences
+api/local-storage/index.js       -> /api/local-storage
 ```
 
 Each endpoint maps to its own MongoDB collection, so the project files and database data are separated by purpose.

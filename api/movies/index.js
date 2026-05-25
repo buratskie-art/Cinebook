@@ -1,4 +1,4 @@
-const { createArrayResourceHandler } = require('./_lib/resource-handler');
+const { createArrayResourceHandler } = require('../_lib/resource-handler');
 
 module.exports = createArrayResourceHandler({
   stateKey: 'movies',

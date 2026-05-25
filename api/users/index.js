@@ -1,4 +1,4 @@
-const { createObjectResourceHandler } = require('./_lib/resource-handler');
+const { createObjectResourceHandler } = require('../_lib/resource-handler');
 
 module.exports = createObjectResourceHandler({
   stateKey: 'users',

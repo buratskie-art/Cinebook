@@ -2131,24 +2131,6 @@ function saveSettings() {
     alert('✓ Settings saved successfully! (Demo mode - settings not persisted)');
 }
 
-async function syncLocalDataToMongo() {
-    if (!window.CineBookDataSync) {
-        alert('MongoDB sync is not loaded on this page.');
-        return;
-    }
-
-    if (!confirm('This will overwrite the CineBook data currently stored in MongoDB with the data in this browser. Continue?')) {
-        return;
-    }
-
-    try {
-        await window.CineBookDataSync.overwriteMongoFromLocal();
-        alert('MongoDB data was overwritten with your local CineBook data.');
-    } catch (error) {
-        alert('MongoDB sync failed: ' + error.message);
-    }
-}
-
 function exportData() {
     const data = {
         movies: getAdminMovies(),
@@ -2215,7 +2197,6 @@ window.loadAdminDashboardStats = loadAdminDashboardStats;
 window.initAdminDashboard = initAdminDashboard;
 window.switchAdminTab = switchAdminTab;
 window.saveSettings = saveSettings;
-window.syncLocalDataToMongo = syncLocalDataToMongo;
 window.exportData = exportData;
 window.resetData = resetData;
 window.reviewPaymentSubmission = reviewPaymentSubmission;

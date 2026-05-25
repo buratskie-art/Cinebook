@@ -2,7 +2,10 @@ const { MongoClient } = require('mongodb');
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const MONGODB_DB = process.env.MONGODB_DB || 'cinebook';
-const LEGACY_COLLECTION_NAME = process.env.MONGODB_COLLECTION || 'app_state';
+const LEGACY_COLLECTION_NAMES = Array.from(new Set([
+  process.env.MONGODB_COLLECTION || 'app_state',
+  'app_state'
+]));
 const STATE_ID = 'cinebook';
 
 const ARRAY_COLLECTIONS = {
@@ -126,11 +129,36 @@ async function readSeparatedState(db) {
 }
 
 async function readLegacyState(db) {
-  const doc = await db.collection(LEGACY_COLLECTION_NAME).findOne({ _id: STATE_ID });
+  for (const collectionName of LEGACY_COLLECTION_NAMES) {
+    const doc = await db.collection(collectionName).findOne({ _id: STATE_ID });
+    if (doc) {
+      return {
+        state: normalizeState(doc.state),
+        updatedAt: doc.updatedAt,
+        collectionName
+      };
+    }
+  }
+
   return {
-    state: normalizeState(doc && doc.state),
-    updatedAt: doc && doc.updatedAt
+    state: normalizeState(),
+    updatedAt: null,
+    collectionName: null
   };
+}
+
+async function removeLegacyState(db) {
+  await Promise.all(
+    LEGACY_COLLECTION_NAMES.map(async (collectionName) => {
+      try {
+        await db.collection(collectionName).drop();
+      } catch (error) {
+        if (error.codeName !== 'NamespaceNotFound') {
+          throw error;
+        }
+      }
+    })
+  );
 }
 
 async function writeSeparatedState(db, state, source) {
@@ -176,6 +204,8 @@ async function writeSeparatedState(db, state, source) {
     { upsert: true }
   );
 
+  await removeLegacyState(db);
+
   return updatedAt;
 }
 
@@ -199,6 +229,7 @@ module.exports = async function handler(req, res) {
       const metadata = await db.collection(METADATA_COLLECTION).findOne({ _id: STATE_ID });
 
       if (separatedState) {
+        await removeLegacyState(db);
         send(res, 200, {
           ok: true,
           state: separatedState,
@@ -209,11 +240,24 @@ module.exports = async function handler(req, res) {
       }
 
       const legacy = await readLegacyState(db);
+      if (legacy.collectionName) {
+        const updatedAt = await writeSeparatedState(db, legacy.state, 'legacy-app-state-migration');
+        send(res, 200, {
+          ok: true,
+          state: legacy.state,
+          updatedAt,
+          storage: 'separated-collections',
+          migratedFrom: legacy.collectionName,
+          removedLegacyCollections: LEGACY_COLLECTION_NAMES
+        });
+        return;
+      }
+
       send(res, 200, {
         ok: true,
         state: legacy.state,
         updatedAt: legacy.updatedAt,
-        storage: 'legacy-app-state'
+        storage: 'separated-collections'
       });
       return;
     }

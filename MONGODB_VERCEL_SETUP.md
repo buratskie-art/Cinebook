@@ -7,10 +7,9 @@ In your Vercel project, go to **Settings > Environment Variables** and add:
 ```text
 MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/<database>?retryWrites=true&w=majority
 MONGODB_DB=cinebook
-MONGODB_COLLECTION=app_state
 ```
 
-`MONGODB_COLLECTION` is optional and is now only used as a legacy fallback for older single-document data.
+`MONGODB_COLLECTION` is no longer needed. The API stores data in separate collections.
 
 ## 2. Deploy
 
@@ -22,16 +21,11 @@ Vercel will install the `mongodb` dependency from `package.json` and expose the 
 /api/state
 ```
 
-## 3. Override MongoDB with your browser data
+## 3. Automatic MongoDB Updates
 
-After deployment:
+After deployment, the browser sync script automatically sends CineBook data changes to MongoDB. You do not need a manual sync button.
 
-1. Open the deployed CineBook site in the browser that has your local CineBook data.
-2. Log in as admin.
-3. Go to **Settings**.
-4. Click **Sync to MongoDB**.
-
-That button overwrites the organized CineBook collections in MongoDB with the current browser data.
+Open the deployed CineBook site in the browser that has your local CineBook data. On page load and whenever CineBook local data changes, the app sends the data to the organized MongoDB collections.
 
 The API writes data into these collections:
 
@@ -49,7 +43,7 @@ local_storage
 app_metadata
 ```
 
-The old `app_state` collection can stay in MongoDB as backup data. New syncs use the organized collections above.
+The old compiled `app_state` collection is only used for one-time migration. When the API sees legacy `app_state` data, it moves that data into the organized collections and removes the legacy collection.
 
 If your needed data exists in a different browser origin, open `local-storage-migration.html` in that same browser, set the API URL to your deployed `/api/state`, and click **Move Local Storage to MongoDB**.
 

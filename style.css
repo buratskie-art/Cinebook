@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
 /* existing styles kept */
 body {
     margin: 0;
@@ -1493,5 +1495,322 @@ footer a {
         width: 38px;
         height: 58px;
         font-size: 34px !important;
+    }
+}
+
+/* Final theatre polish pass */
+body {
+    font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+header h1,
+.dashboard-header h1,
+.admin-sidebar-header h1,
+#title {
+    font-family: "Cinzel", Georgia, serif !important;
+    font-weight: 700 !important;
+}
+
+/* Richer, more fabric-like homepage curtains */
+.curtain-left,
+.curtain-right {
+    width: clamp(150px, 22vw, 360px) !important;
+    background:
+        radial-gradient(ellipse at 50% 2%, rgba(255, 190, 150, 0.26), transparent 15%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 10%, rgba(0, 0, 0, 0.22) 100%),
+        repeating-linear-gradient(90deg,
+            #160103 0 8px,
+            #3b0307 8px 18px,
+            #7e0a12 18px 31px,
+            #c21422 31px 44px,
+            #8a0b13 44px 56px,
+            #310307 56px 70px,
+            #120102 70px 82px) !important;
+    box-shadow:
+        inset 0 0 34px rgba(0, 0, 0, 0.8),
+        inset 22px 0 40px rgba(255, 120, 90, 0.08),
+        0 18px 46px rgba(0, 0, 0, 0.72) !important;
+}
+
+.curtain-left {
+    clip-path: polygon(0 0, 100% 0, 82% 13%, 70% 25%, 74% 42%, 63% 58%, 68% 74%, 52% 100%, 0 100%) !important;
+}
+
+.curtain-right {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 48% 100%, 32% 74%, 37% 58%, 26% 42%, 30% 25%, 18% 13%) !important;
+}
+
+.curtain-folds::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 52% 18%, rgba(0, 0, 0, 0.34), transparent 22%),
+        radial-gradient(ellipse at 40% 48%, rgba(255, 210, 190, 0.12), transparent 18%),
+        radial-gradient(ellipse at 62% 78%, rgba(0, 0, 0, 0.28), transparent 20%);
+    mix-blend-mode: soft-light;
+}
+
+.curtain-left::after,
+.curtain-right::after {
+    content: "";
+    position: absolute;
+    top: 92px;
+    width: 52%;
+    height: 16px;
+    background: linear-gradient(90deg, rgba(77, 42, 15, 0.2), #9b6926, #e0ba65, #754719);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.curtain-left::after {
+    right: 5%;
+    transform: rotate(-9deg);
+    border-radius: 999px 30px 30px 999px;
+}
+
+.curtain-right::after {
+    left: 5%;
+    transform: rotate(9deg);
+    border-radius: 30px 999px 999px 30px;
+}
+
+.curtain-rod {
+    height: 18px !important;
+}
+
+/* Homepage stage framing */
+header {
+    backdrop-filter: blur(12px);
+}
+
+.featured {
+    background: #080505;
+    border-width: 2px !important;
+}
+
+.featured::after {
+    background:
+        linear-gradient(180deg, transparent 68%, rgba(0, 0, 0, 0.72) 100%),
+        radial-gradient(circle at 50% 0%, rgba(255, 244, 215, 0.22), transparent 34%) !important;
+}
+
+.featured img {
+    filter: saturate(1.08) contrast(1.05);
+}
+
+.movies::before {
+    content: "Now Showing";
+    width: 100%;
+    margin: 0 0 4px;
+    color: #f0d8b3;
+    font-family: "Cinzel", Georgia, serif;
+    font-size: clamp(22px, 3vw, 34px);
+    letter-spacing: 0.04em;
+    text-align: center;
+}
+
+/* Stronger admin redesign */
+.admin-container {
+    --admin-bg: #080606;
+    --admin-panel: #141010;
+    --admin-panel-soft: #1d1412;
+    --admin-red: #8c1720;
+    --admin-red-soft: #b9443e;
+    --admin-text: #eadfcb;
+    --admin-muted: #a99678;
+    --admin-line: rgba(185, 92, 70, 0.3);
+    background:
+        radial-gradient(circle at 72% -4%, rgba(185, 68, 62, 0.12), transparent 34%),
+        linear-gradient(135deg, #060505 0%, #120808 52%, #070505 100%) !important;
+    color: var(--admin-text) !important;
+}
+
+.admin-sidebar {
+    width: 270px !important;
+    background:
+        linear-gradient(180deg, rgba(255, 244, 215, 0.035), transparent 18%),
+        linear-gradient(180deg, #31080b 0%, #160708 45%, #080505 100%) !important;
+    border-right: 1px solid var(--admin-line) !important;
+}
+
+.admin-sidebar-header {
+    padding: 30px 20px !important;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(240, 216, 179, 0.13), transparent 50%),
+        linear-gradient(150deg, #5d0c12 0%, #240607 100%) !important;
+}
+
+.admin-sidebar-header h1 {
+    color: #f0d8b3 !important;
+    font-size: 22px !important;
+}
+
+.admin-sidebar-header p {
+    color: var(--admin-muted) !important;
+    letter-spacing: 0.16em !important;
+}
+
+.admin-nav-menu {
+    padding: 14px 12px !important;
+}
+
+.admin-nav-btn {
+    margin-bottom: 6px !important;
+    padding: 13px 14px !important;
+    border-left: 0 !important;
+    border-radius: 8px !important;
+    color: #c9b899 !important;
+    background: transparent !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em;
+}
+
+.admin-nav-btn:hover,
+.admin-nav-btn.active {
+    background:
+        linear-gradient(90deg, rgba(140, 23, 32, 0.74), rgba(140, 23, 32, 0.16)) !important;
+    color: #fff2d6 !important;
+    box-shadow: inset 3px 0 0 #b9443e, 0 10px 24px rgba(0, 0, 0, 0.24) !important;
+}
+
+.admin-content {
+    margin-left: 270px !important;
+    padding: 34px !important;
+}
+
+.admin-header {
+    min-height: 76px;
+    padding: 22px 26px !important;
+    background:
+        linear-gradient(90deg, rgba(140, 23, 32, 0.18), transparent 48%),
+        linear-gradient(145deg, #1b1211, #0b0808) !important;
+    border: 1px solid var(--admin-line) !important;
+}
+
+.admin-header h2 {
+    font-family: "Cinzel", Georgia, serif !important;
+    color: #f0d8b3 !important;
+    font-size: clamp(24px, 3vw, 34px) !important;
+    letter-spacing: 0.02em;
+}
+
+.admin-stats-grid {
+    gap: 18px !important;
+}
+
+.admin-stat-card {
+    padding: 24px !important;
+    text-align: left !important;
+    background:
+        linear-gradient(180deg, rgba(185, 68, 62, 0.08), transparent 45%),
+        linear-gradient(145deg, #1d1412, #0b0808) !important;
+}
+
+.admin-stat-card::before,
+.admin-stat-card::after {
+    display: none !important;
+}
+
+.admin-stat-value {
+    color: #e16f63 !important;
+    font-weight: 800 !important;
+}
+
+.admin-stat-label {
+    color: #b9a58a !important;
+    font-weight: 700 !important;
+}
+
+.admin-form-section {
+    padding: 26px !important;
+}
+
+.admin-form-section h3 {
+    color: #e8c9a7 !important;
+    border-bottom: 1px solid var(--admin-line) !important;
+    font-family: "Cinzel", Georgia, serif !important;
+}
+
+.admin-form-field label {
+    color: #b9a58a !important;
+}
+
+.admin-form-field input,
+.admin-form-field textarea,
+.admin-form-field select {
+    background: #0d0a0a !important;
+    color: #eadfcb !important;
+    border: 1px solid rgba(185, 92, 70, 0.34) !important;
+    box-shadow: none !important;
+}
+
+.admin-form-field input::placeholder,
+.admin-form-field textarea::placeholder {
+    color: #796b58;
+}
+
+.admin-form-field input:focus,
+.admin-form-field textarea:focus,
+.admin-form-field select:focus {
+    border-color: #b9443e !important;
+    box-shadow: 0 0 0 3px rgba(185, 68, 62, 0.16) !important;
+}
+
+.admin-table-wrapper {
+    background: #100c0b !important;
+}
+
+.admin-table thead {
+    background: #23100f !important;
+}
+
+.admin-table th {
+    color: #d6b491 !important;
+    font-size: 12px !important;
+}
+
+.admin-table td {
+    color: #dfd2bf !important;
+    background: rgba(255, 244, 215, 0.015);
+}
+
+.admin-table tr:nth-child(even) td {
+    background: rgba(185, 68, 62, 0.035);
+}
+
+.admin-btn,
+.admin-logout-btn {
+    background: linear-gradient(180deg, #a7252f 0%, #641017 100%) !important;
+    color: #fff1d8 !important;
+    border: 1px solid rgba(240, 216, 179, 0.16) !important;
+}
+
+.admin-btn:hover,
+.admin-logout-btn:hover {
+    background: linear-gradient(180deg, #bd333d 0%, #75151d 100%) !important;
+}
+
+.admin-btn-secondary {
+    background: #2c2420 !important;
+    color: #e0cfb6 !important;
+}
+
+.admin-btn-danger {
+    background: linear-gradient(180deg, #8f2020 0%, #520e0e 100%) !important;
+}
+
+@media (max-width: 768px) {
+    .admin-sidebar {
+        width: 210px !important;
+    }
+
+    .admin-content {
+        margin-left: 210px !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .admin-content {
+        margin-left: 0 !important;
     }
 }

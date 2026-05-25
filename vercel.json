@@ -1,4 +1,16 @@
 {
+  "rewrites": [
+    { "source": "/api/movies", "destination": "/api/data?resource=movies" },
+    { "source": "/api/theaters", "destination": "/api/data?resource=theaters" },
+    { "source": "/api/showtimes", "destination": "/api/data?resource=showtimes" },
+    { "source": "/api/reservations", "destination": "/api/data?resource=reservations" },
+    { "source": "/api/payments", "destination": "/api/data?resource=payments" },
+    { "source": "/api/payment-submissions", "destination": "/api/data?resource=payment-submissions" },
+    { "source": "/api/email-log", "destination": "/api/data?resource=email-log" },
+    { "source": "/api/users", "destination": "/api/data?resource=users" },
+    { "source": "/api/preferences", "destination": "/api/data?resource=preferences" },
+    { "source": "/api/local-storage", "destination": "/api/data?resource=local-storage" }
+  ],
   "functions": {
     "api/**/*.js": {
       "maxDuration": 10

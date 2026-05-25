@@ -36,20 +36,20 @@ Vercel will install the `mongodb` and `resend` dependencies from `package.json` 
 The project also has separate API folders for each data group:
 
 ```text
-api/movies/index.js              -> /api/movies
-api/theaters/index.js            -> /api/theaters
-api/showtimes/index.js           -> /api/showtimes
-api/reservations/index.js        -> /api/reservations
-api/payments/index.js            -> /api/payments
-api/payment-submissions/index.js -> /api/payment-submissions
-api/email-log/index.js           -> /api/email-log
-api/users/index.js               -> /api/users
-api/preferences/index.js         -> /api/preferences
-api/local-storage/index.js       -> /api/local-storage
+api/data.js?resource=movies              -> /api/movies
+api/data.js?resource=theaters            -> /api/theaters
+api/data.js?resource=showtimes           -> /api/showtimes
+api/data.js?resource=reservations        -> /api/reservations
+api/data.js?resource=payments            -> /api/payments
+api/data.js?resource=payment-submissions -> /api/payment-submissions
+api/data.js?resource=email-log           -> /api/email-log
+api/data.js?resource=users               -> /api/users
+api/data.js?resource=preferences         -> /api/preferences
+api/data.js?resource=local-storage       -> /api/local-storage
 api/init-db/index.js             -> /api/init-db
 ```
 
-Each endpoint maps to its own MongoDB collection, so the project files and database data are separated by purpose.
+The collection URLs are preserved with Vercel rewrites, but they now share one serverless function to stay within the Hobby plan function limit. Each endpoint still maps to its own MongoDB collection, so the database data remains separated by purpose.
 
 ## 4. Automatic MongoDB Updates
 

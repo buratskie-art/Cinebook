@@ -10,13 +10,23 @@
 <body>
 
     <div class="curtain-rod"></div>
+    <div class="curtain-valance" aria-hidden="true">
+        <div class="valance-swag valance-left"></div>
+        <div class="valance-swag valance-center"></div>
+        <div class="valance-swag valance-right"></div>
+        <div class="valance-rope valance-rope-left"></div>
+        <div class="valance-rope valance-rope-center"></div>
+        <div class="valance-rope valance-rope-right"></div>
+    </div>
 
     <div class="curtain-left">
       <div class="curtain-folds"></div>
+      <div class="curtain-tieback"></div>
     </div>
 
     <div class="curtain-right">
       <div class="curtain-folds"></div>
+      <div class="curtain-tieback"></div>
     </div>
 
     <header>
@@ -41,9 +51,9 @@
 
     <!-- FEATURED -->
     <section class="featured">
-        <button class="banner-control banner-prev" type="button" onclick="previousSlide()" aria-label="Previous banner">‹</button>
+        <button class="banner-control banner-prev" type="button" onclick="previousSlide()" aria-label="Previous banner">&lsaquo;</button>
         <img id="slide" src="movie1.jpg">
-        <button class="banner-control banner-next" type="button" onclick="nextSlide()" aria-label="Next banner">›</button>
+        <button class="banner-control banner-next" type="button" onclick="nextSlide()" aria-label="Next banner">&rsaquo;</button>
     </section>
 
     <!-- MOVIES -->
@@ -59,3 +69,4 @@
 
 </body>
 </html>
+

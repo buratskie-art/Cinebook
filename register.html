@@ -105,10 +105,23 @@
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Create a password">
+                <div class="password-field">
+                    <input type="password" id="password" placeholder="Create a password" autocomplete="new-password">
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', this)">Show</button>
+                </div>
+                <div class="password-strength" id="passwordStrength">
+                    <div class="password-strength-bar"></div>
+                </div>
+                <p class="password-hint" id="passwordHint">Use at least 8 characters with uppercase, lowercase, number, and symbol.</p>
             </div>
+
+            <label class="terms-check">
+                <input type="checkbox" id="termsAgree">
+                <span>I agree to the <a href="terms.html">Terms of Use</a> and <a href="privacy.html">Privacy Policy</a>.</span>
+            </label>
+            <p class="auth-message" id="registerMessage"></p>
             
-            <button onclick="register()">Register</button>
+            <button id="registerSubmit" onclick="register()">Register</button>
             
             <div class="auth-footer">
                 Already have an account? <a href="login.html">Login here</a>

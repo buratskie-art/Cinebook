@@ -1503,10 +1503,25 @@ body {
     font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
 }
 
+button,
+input,
+select,
+textarea,
+label,
+table,
+.admin-nav-btn,
+.auth-form,
+.dashboard-container,
+.admin-container {
+    font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
 header h1,
 .dashboard-header h1,
 .admin-sidebar-header h1,
-#title {
+#title,
+.auth-form h2,
+.admin-auth-form h2 {
     font-family: "Cinzel", Georgia, serif !important;
     font-weight: 700 !important;
 }
@@ -1516,16 +1531,16 @@ header h1,
 .curtain-right {
     width: clamp(150px, 22vw, 360px) !important;
     background:
-        radial-gradient(ellipse at 50% 2%, rgba(255, 190, 150, 0.26), transparent 15%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 10%, rgba(0, 0, 0, 0.22) 100%),
+        radial-gradient(ellipse at 42% 2%, rgba(255, 95, 72, 0.28), transparent 16%),
+        linear-gradient(180deg, rgba(255, 210, 188, 0.1), transparent 12%, rgba(0, 0, 0, 0.32) 100%),
         repeating-linear-gradient(90deg,
-            #160103 0 8px,
-            #3b0307 8px 18px,
-            #7e0a12 18px 31px,
-            #c21422 31px 44px,
-            #8a0b13 44px 56px,
-            #310307 56px 70px,
-            #120102 70px 82px) !important;
+            #100102 0 8px,
+            #2b0205 8px 16px,
+            #65070d 16px 27px,
+            #d20e1d 27px 38px,
+            #8a0710 38px 49px,
+            #260205 49px 61px,
+            #050000 61px 70px) !important;
     box-shadow:
         inset 0 0 34px rgba(0, 0, 0, 0.8),
         inset 22px 0 40px rgba(255, 120, 90, 0.08),
@@ -1533,11 +1548,11 @@ header h1,
 }
 
 .curtain-left {
-    clip-path: polygon(0 0, 100% 0, 82% 13%, 70% 25%, 74% 42%, 63% 58%, 68% 74%, 52% 100%, 0 100%) !important;
+    clip-path: polygon(0 0, 100% 0, 92% 11%, 80% 24%, 69% 36%, 56% 49%, 44% 63%, 30% 78%, 22% 100%, 0 100%) !important;
 }
 
 .curtain-right {
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 48% 100%, 32% 74%, 37% 58%, 26% 42%, 30% 25%, 18% 13%) !important;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 78% 100%, 70% 78%, 56% 63%, 44% 49%, 31% 36%, 20% 24%, 8% 11%) !important;
 }
 
 .curtain-folds::before {
@@ -1560,6 +1575,23 @@ header h1,
     height: 16px;
     background: linear-gradient(90deg, rgba(77, 42, 15, 0.2), #9b6926, #e0ba65, #754719);
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+body:has(.featured)::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 168px;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(255, 218, 138, 0.42), transparent 38%),
+        repeating-linear-gradient(90deg, #5b3218 0 44px, #7a471f 44px 88px, #3b1d0c 88px 132px),
+        linear-gradient(180deg, #9c672f, #2a1408);
+    clip-path: polygon(0 36%, 100% 36%, 100% 100%, 0 100%);
+    opacity: 0.72;
 }
 
 .curtain-left::after {
@@ -1586,6 +1618,7 @@ header {
 .featured {
     background: #080505;
     border-width: 2px !important;
+    margin-top: 42px !important;
 }
 
 .featured::after {
@@ -1596,6 +1629,111 @@ header {
 
 .featured img {
     filter: saturate(1.08) contrast(1.05);
+}
+
+.featured::before {
+    background:
+        radial-gradient(ellipse at 50% 100%, rgba(255, 208, 118, 0.32), transparent 24%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.58), transparent 22%, transparent 78%, rgba(0, 0, 0, 0.58)) !important;
+}
+
+/* Auth improvements */
+.auth-page,
+.admin-auth-page {
+    background:
+        radial-gradient(circle at 50% 0%, rgba(185, 68, 62, 0.16), transparent 34%),
+        linear-gradient(180deg, #080505, #160909 52%, #070505) !important;
+}
+
+.auth-form,
+.admin-auth-form {
+    background:
+        linear-gradient(180deg, rgba(255, 244, 215, 0.05), transparent 26%),
+        linear-gradient(145deg, #1b1211, #0b0808) !important;
+    border: 1px solid rgba(185, 92, 70, 0.34);
+    box-shadow: 0 24px 62px rgba(0, 0, 0, 0.6) !important;
+}
+
+.password-field {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.password-field input {
+    flex: 1;
+}
+
+.password-toggle {
+    width: auto !important;
+    min-width: 72px;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+}
+
+.password-strength {
+    height: 7px;
+    margin-top: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 244, 215, 0.12);
+}
+
+.password-strength-bar {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: #8a2020;
+    transition: width 180ms ease, background-color 180ms ease;
+}
+
+.password-strength.weak .password-strength-bar {
+    width: 33%;
+    background: #b83232;
+}
+
+.password-strength.medium .password-strength-bar {
+    width: 68%;
+    background: #b98232;
+}
+
+.password-strength.strong .password-strength-bar {
+    width: 100%;
+    background: #3d9b68;
+}
+
+.password-hint,
+.auth-message {
+    margin: 8px 0 0;
+    color: #b9a58a;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.auth-message {
+    min-height: 18px;
+    color: #e49a8d;
+}
+
+.terms-check {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 4px 0 14px;
+    color: #d8c8ac;
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: left;
+}
+
+.terms-check input {
+    width: auto !important;
+    margin-top: 3px;
+}
+
+.terms-check a {
+    color: #e8c9a7;
+    font-weight: 700;
 }
 
 .movies::before {

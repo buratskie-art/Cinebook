@@ -105,7 +105,10 @@
             
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Enter your password">
+                <div class="password-field">
+                    <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', this)">Show</button>
+                </div>
             </div>
             
             <button onclick="login()">Login</button>

@@ -132,7 +132,7 @@
     <div class="admin-auth-page">
         <div class="admin-auth-form">
             <a href="index.html" class="admin-back-link">← Back to Home</a>
-            <h2>🔐 CineBook Admin</h2>
+            <h2>CineBook Admin</h2>
             <p class="subtitle">Secure Administration Panel</p>
             
             <div id="adminErrorMsg" class="admin-error-msg"></div>
@@ -145,7 +145,7 @@
             
             <div class="admin-form-group">
                 <label for="adminPassword">Admin Password</label>
-                <input type="password" id="adminPassword" placeholder="Enter admin password" autocomplete="current-password">
+                <div class="password-field"><input type="password" id="adminPassword" placeholder="Enter admin password" autocomplete="current-password"><button type="button" class="password-toggle" onclick="togglePasswordVisibility('adminPassword', this)">Show</button></div>
             </div>
             
             <button onclick="adminLogin()">Login to Admin Panel</button>
@@ -163,3 +163,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+

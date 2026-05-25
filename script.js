@@ -623,12 +623,64 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
     }
 
     // --- Auth (kept simple, namespaced keys) ---
+    function getPasswordStrength(password) {
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (/[a-z]/.test(password)) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+
+        if (!password) return { score: 0, label: 'Password strength', className: '' };
+        if (score <= 2) return { score, label: 'Weak password', className: 'weak' };
+        if (score <= 4) return { score, label: 'Medium password', className: 'medium' };
+        return { score, label: 'Strong password', className: 'strong' };
+    }
+
+    function updatePasswordStrength() {
+        const passEl = document.getElementById("password");
+        const meter = document.getElementById("passwordStrength");
+        const hint = document.getElementById("passwordHint");
+        if (!passEl || !meter || !hint) return;
+
+        const result = getPasswordStrength(passEl.value);
+        meter.className = `password-strength ${result.className}`.trim();
+        hint.textContent = result.label === 'Strong password'
+            ? 'Strong password. Good choice.'
+            : 'Use at least 8 characters with uppercase, lowercase, number, and symbol.';
+    }
+
+    function togglePasswordVisibility(inputId, button) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        if (button) button.textContent = isHidden ? 'Hide' : 'Show';
+    }
+
     function register() {
         const userEl = document.getElementById("username");
         const passEl = document.getElementById("password");
+        const termsEl = document.getElementById("termsAgree");
+        const messageEl = document.getElementById("registerMessage");
         if (!userEl || !passEl) return;
         const user = userEl.value;
         const pass = passEl.value;
+
+        if (messageEl) messageEl.textContent = '';
+        if (termsEl && !termsEl.checked) {
+            if (messageEl) messageEl.textContent = 'Please agree to the Terms of Use and Privacy Policy before registering.';
+            else alert('Please agree to the Terms of Use and Privacy Policy before registering.');
+            return;
+        }
+
+        if (getPasswordStrength(pass).score < 4) {
+            if (messageEl) messageEl.textContent = 'Please create a stronger password before registering.';
+            else alert('Please create a stronger password before registering.');
+            updatePasswordStrength();
+            return;
+        }
+
         localStorage.setItem(LS_USER, user);
         localStorage.setItem(LS_PASS, pass);
         alert("Registered!");
@@ -1032,6 +1084,12 @@ CineBook Admin
             adminUsername.addEventListener('keydown', submitIfEnter(adminLogin));
             adminPassword.addEventListener('keydown', submitIfEnter(adminLogin));
         }
+
+        const registerPassword = document.getElementById('password');
+        if (registerPassword && document.getElementById('passwordStrength')) {
+            registerPassword.addEventListener('input', updatePasswordStrength);
+            updatePasswordStrength();
+        }
     }
 
     // Check and expire pending bookings that exceeded deadline
@@ -1089,6 +1147,7 @@ CineBook Admin
         getAvailableSeatsForShowtime,
         sendEmailNotification,
         checkExpiredPayments,
+        togglePasswordVisibility,
         nextSlide,
         previousSlide
     };
@@ -1115,6 +1174,7 @@ window.loadShowtimesForMovie = CineBook.loadShowtimesForMovie; // for showtime s
 window.selectShowtime = CineBook.selectShowtime;    // for showtime selection
 window.createSeatsForShowtime = CineBook.createSeatsForShowtime; // for showtime-specific seats
 window.updateSeatForShowtime = CineBook.updateSeatForShowtime;   // for showtime-specific seat updates
+window.togglePasswordVisibility = CineBook.togglePasswordVisibility;
 window.nextSlide = CineBook.nextSlide;
 window.previousSlide = CineBook.previousSlide;
 

@@ -2172,3 +2172,44 @@ header {
         width: calc(100% - 28px) !important;
     }
 }
+
+/* Image-based homepage background.
+   Save the uploaded curtain image as assets/theatre-curtain-bg.png. */
+body:has(.curtain-valance) {
+    background:
+        linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.82)),
+        url("assets/theatre-curtain-bg.png") center top / min(100%, 1180px) auto no-repeat,
+        #050303 !important;
+}
+
+body:has(.curtain-valance)::before {
+    background:
+        radial-gradient(ellipse at 50% 38%, rgba(255, 214, 126, 0.12), transparent 30%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.72), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.72)) !important;
+}
+
+.curtain-rod,
+.curtain-valance,
+.curtain-left,
+.curtain-right {
+    display: none !important;
+}
+
+header {
+    margin-top: 24px !important;
+}
+
+.featured {
+    margin-top: clamp(260px, 42vw, 520px) !important;
+}
+
+@media (max-width: 760px) {
+    body:has(.curtain-valance) {
+        background-size: 980px auto, min(100%, 760px) auto, auto !important;
+        background-position: center top, center top, center !important;
+    }
+
+    .featured {
+        margin-top: clamp(220px, 58vw, 420px) !important;
+    }
+}

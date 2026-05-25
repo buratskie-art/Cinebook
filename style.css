@@ -1828,6 +1828,37 @@ header {
     opacity: 0.72;
 }
 
+.existing-showtimes-preview {
+    min-height: 44px;
+    padding: 12px;
+    border: 1px solid rgba(215, 173, 80, 0.22);
+    border-radius: 8px;
+    background: rgba(255, 244, 215, 0.04);
+    color: #d8c8ac;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.existing-showtime-chip {
+    display: inline-block;
+    margin: 3px 6px 3px 0;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(215, 173, 80, 0.35);
+    background: rgba(143, 16, 23, 0.38);
+    color: #f4d28a;
+    font-weight: 700;
+}
+
+.admin-form-field input[type="file"] {
+    width: 100%;
+    padding: 11px;
+    border: 1px dashed rgba(215, 173, 80, 0.42);
+    border-radius: 8px;
+    background: rgba(255, 244, 215, 0.055);
+    color: #eadfcb;
+}
+
 .terms-check {
     display: flex;
     gap: 10px;
@@ -2291,7 +2322,7 @@ header {
 body:has(.curtain-valance) {
     background:
         linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.78)),
-        url("assets/theatre-curtain-bg.png?v=full-red-curtain-2") center top / cover no-repeat fixed,
+        url("assets/theatre-curtain-bg.png?v=red-curtain-no-brown") center top / cover no-repeat fixed,
         #050303 !important;
 }
 
@@ -2466,7 +2497,8 @@ header {
 .seat-section-panel {
     margin-top: 26px;
     padding: 22px;
-    overflow-x: auto;
+    overflow: hidden;
+    text-align: center;
 }
 
 .seat-section-heading {
@@ -2493,11 +2525,24 @@ header {
     margin-bottom: 0;
 }
 
-.seat-section-panel .seats {
+.seat-scroll-area {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 10px;
+}
+
+.seat-scroll-area .seats {
     width: max-content;
     min-width: 100%;
     margin-left: auto;
     margin-right: auto;
+}
+
+.seat-section-panel > button {
+    display: block;
+    width: fit-content;
+    margin: 18px auto 0;
 }
 
 @media (max-width: 860px) {

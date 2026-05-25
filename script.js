@@ -1586,13 +1586,27 @@ function saveAdminMovies(movieList) {
     }
 }
 
-function addMovie() {
+function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) {
+            resolve('');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target.result);
+        reader.onerror = () => reject(new Error('Unable to read poster file.'));
+        reader.readAsDataURL(file);
+    });
+}
+
+async function addMovie() {
     const title = document.getElementById('movieTitle').value.trim();
     const year = parseInt(document.getElementById('movieYear').value) || new Date().getFullYear();
     const genre = document.getElementById('movieGenre').value.trim();
     const duration = parseInt(document.getElementById('movieDuration').value) || 120;
     const synopsis = document.getElementById('movieSynopsis').value.trim();
-    const poster = document.getElementById('moviePoster').value.trim();
+    const posterUrl = document.getElementById('moviePoster').value.trim();
+    const posterFile = document.getElementById('moviePosterFile')?.files?.[0] || null;
     
     if (!title || !genre) {
         alert('Please fill in Title and Genre fields.');
@@ -1601,6 +1615,14 @@ function addMovie() {
     
     const allMovies = getAdminMovies();
     const defaultPoster = 'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22600%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%221a1a1a%22/%3E%3C/svg%3E';
+    let uploadedPoster = '';
+    try {
+        uploadedPoster = await readFileAsDataUrl(posterFile);
+    } catch (error) {
+        alert(error.message);
+        return;
+    }
+    const poster = uploadedPoster || posterUrl;
 
     if (window.editingMovieId) {
         const movieIndex = allMovies.findIndex(m => m.id === window.editingMovieId);
@@ -1683,6 +1705,8 @@ function clearMovieForm() {
     document.getElementById('movieDuration').value = '';
     document.getElementById('movieSynopsis').value = '';
     document.getElementById('moviePoster').value = '';
+    const posterFile = document.getElementById('moviePosterFile');
+    if (posterFile) posterFile.value = '';
     window.editingMovieId = null;
     // Reset button text
     const addBtn = document.querySelector('button[onclick="addMovie()"]');
@@ -1853,6 +1877,9 @@ function populateShowtimeDropdowns() {
 
     const allMovies = getAdminMovies();
     const allTheaters = getAdminTheaters();
+    const selectedMovieId = movieSelect.value;
+    const selectedTheaterId = theaterSelect.value;
+    const selectedTime = timeSelect ? timeSelect.value : '';
 
     console.log('Populating with data:', {
         movies: allMovies.length,
@@ -1863,20 +1890,107 @@ function populateShowtimeDropdowns() {
 
     movieSelect.innerHTML = '<option value="">Select a movie</option>' +
         allMovies.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+    if (selectedMovieId && allMovies.some(m => String(m.id) === String(selectedMovieId))) {
+        movieSelect.value = selectedMovieId;
+    }
 
     theaterSelect.innerHTML = '<option value="">Select a theater</option>' +
         allTheaters.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    if (selectedTheaterId && allTheaters.some(t => String(t.id) === String(selectedTheaterId))) {
+        theaterSelect.value = selectedTheaterId;
+    }
 
     if (timeSelect) {
         const timeOptions = ADMIN_SHOWTIME_SLOTS.length > 0
             ? ADMIN_SHOWTIME_SLOTS.map(slot => `<option value="${slot}">${slot}</option>`).join('')
             : '<option value="">No time slots available</option>';
         timeSelect.innerHTML = '<option value="">Select a time slot</option>' + timeOptions;
+        if (selectedTime && ADMIN_SHOWTIME_SLOTS.includes(selectedTime)) {
+            timeSelect.value = selectedTime;
+        }
         console.log('Time slots populated:', ADMIN_SHOWTIME_SLOTS);
     }
+
+    [movieSelect, theaterSelect, document.getElementById('showtimeDate')].forEach((field) => {
+        if (!field || field.dataset.showtimePreviewBound === 'true') return;
+        field.dataset.showtimePreviewBound = 'true';
+        field.addEventListener('change', renderExistingShowtimesPreview);
+        field.addEventListener('input', renderExistingShowtimesPreview);
+    });
+    renderExistingShowtimesPreview();
 }
 
 typeof window !== 'undefined' && (window.ADMIN_SHOWTIME_SLOTS = ADMIN_SHOWTIME_SLOTS);
+
+function renderExistingShowtimesPreview() {
+    const preview = document.getElementById('existingShowtimesPreview');
+    const movieSelect = document.getElementById('showtimeMovie');
+    const theaterSelect = document.getElementById('showtimeTheater');
+    const timeSelect = document.getElementById('showtimeTime');
+    const movieId = movieSelect?.value || '';
+    const theaterId = theaterSelect?.value || '';
+    const date = document.getElementById('showtimeDate')?.value || '';
+    if (!preview) return;
+
+    if (!movieId || !theaterId) {
+        preview.innerHTML = 'Select a movie and theater to view existing showtimes.';
+        refreshShowtimeTimeOptions([]);
+        return;
+    }
+
+    const movieTitle = movieSelect.options[movieSelect.selectedIndex]?.text || '';
+    const theaterName = theaterSelect.options[theaterSelect.selectedIndex]?.text || '';
+
+    const existing = getAdminShowtimes()
+        .filter(showtime => {
+            const sameMovie = String(showtime.movieId) === String(movieId) ||
+                String(showtime.movieTitle || showtime.movie || '').toLowerCase() === movieTitle.toLowerCase();
+            const sameTheater = String(showtime.theaterId) === String(theaterId) ||
+                String(showtime.theaterName || showtime.theater || '').toLowerCase() === theaterName.toLowerCase();
+            return sameMovie && sameTheater && (!date || showtime.date === date);
+        })
+        .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+
+    refreshShowtimeTimeOptions(existing);
+
+    if (existing.length === 0) {
+        preview.innerHTML = date
+            ? 'No existing showtimes for this movie, theater, and date.'
+            : 'No existing showtimes for this movie and theater.';
+        return;
+    }
+
+    preview.innerHTML = existing.map(showtime => `
+        <span class="existing-showtime-chip">${showtime.date} ${showtime.time}</span>
+    `).join('');
+}
+
+function refreshShowtimeTimeOptions(existingShowtimes) {
+    const timeSelect = document.getElementById('showtimeTime');
+    const date = document.getElementById('showtimeDate')?.value || '';
+    if (!timeSelect) return;
+
+    const selectedTime = timeSelect.value;
+    const usedTimes = new Set(
+        (existingShowtimes || [])
+            .filter(showtime => !date || showtime.date === date)
+            .map(showtime => showtime.time)
+    );
+
+    Array.from(timeSelect.options).forEach(option => {
+        if (!option.value) return;
+        const baseLabel = option.value;
+        const isUsed = usedTimes.has(option.value);
+        option.disabled = isUsed;
+        option.textContent = isUsed ? `${baseLabel} - already scheduled` : baseLabel;
+    });
+
+    if (selectedTime && !usedTimes.has(selectedTime)) {
+        timeSelect.value = selectedTime;
+    } else if (selectedTime && usedTimes.has(selectedTime)) {
+        timeSelect.value = '';
+    }
+}
 
 function addShowtime() {
     console.log('addShowtime called');
@@ -1951,6 +2065,7 @@ function addShowtime() {
     alert('Showtime created successfully!');
     clearShowtimeForm();
     loadShowtimesList();
+    renderExistingShowtimesPreview();
 }
 
 function deleteShowtime(showtimeId) {
@@ -1968,6 +2083,7 @@ function clearShowtimeForm() {
     document.getElementById('showtimeTheater').value = '';
     document.getElementById('showtimeDate').value = '';
     document.getElementById('showtimeTime').value = '';
+    renderExistingShowtimesPreview();
 }
 
 function loadShowtimesList() {

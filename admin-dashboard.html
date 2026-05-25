@@ -385,9 +385,14 @@
                             <label>Synopsis</label>
                             <textarea id="movieSynopsis" placeholder="Movie description" rows="3"></textarea>
                         </div>
-                        <div class="admin-form-field" style="grid-column: 1 / -1;">
-                            <label>Poster URL</label>
+                        <div class="admin-form-field">
+                            <label>Poster Image URL (optional)</label>
                             <input type="text" id="moviePoster" placeholder="https://example.com/poster.jpg">
+                        </div>
+                        <div class="admin-form-field">
+                            <label>Or Upload Poster Photo (optional)</label>
+                            <input type="file" id="moviePosterFile" accept="image/*">
+                            <small style="display:block; margin-top:6px; color:#bbb; font-size:12px;">Choose a local image file. If both are filled, the uploaded photo is used.</small>
                         </div>
                     </div>
                     <div class="admin-form-actions">
@@ -486,6 +491,10 @@
                                 <option value="22:00">22:00</option>
                             </select>
                             <small style="display:block; margin-top:6px; color:#bbb; font-size:12px;">Available 2-hour interval slots: 10:00, 12:00, 14:00, 16:00, 18:00, 20:00, 22:00.</small>
+                        </div>
+                        <div class="admin-form-field" style="grid-column: 1 / -1;">
+                            <label>Existing Showtimes for Selected Movie / Theater</label>
+                            <div id="existingShowtimesPreview" class="existing-showtimes-preview">Select a movie and theater to view existing showtimes.</div>
                         </div>
                     </div>
                     <div class="admin-form-actions">

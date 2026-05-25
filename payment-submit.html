@@ -506,7 +506,11 @@
                 }
                 localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
 
-                showAlert('✓ Payment proof submitted successfully! Admin will review within 24 hours.', 'success');
+                if (typeof window.sendPaymentSubmittedEmail === 'function') {
+                    window.sendPaymentSubmittedEmail(booking, paymentSubmission);
+                }
+
+                showAlert('Payment proof submitted successfully! Admin will review within 24 hours.', 'success');
                 localStorage.removeItem('cinebook:pendingBookingId');
                 setTimeout(() => location.href = 'dashboard.html', 2000);
             };

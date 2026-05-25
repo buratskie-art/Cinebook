@@ -11,14 +11,26 @@ MONGODB_DB=cinebook
 
 `MONGODB_COLLECTION` is no longer needed. The API stores data in separate collections.
 
-## 2. Deploy
+## 2. Add Resend Email Variables
+
+For automatic booking and payment emails, add these Vercel environment variables too:
+
+```text
+RESEND_API_KEY=<your-new-resend-api-key>
+RESEND_FROM_EMAIL=CineBook <onboarding@resend.dev>
+```
+
+Use `onboarding@resend.dev` only for testing. For production, verify your own domain in Resend and change `RESEND_FROM_EMAIL` to a verified sender such as `CineBook <noreply@yourdomain.com>`.
+
+## 3. Deploy
 
 Push these project files to GitHub and redeploy from Vercel.
 
-Vercel will install the `mongodb` dependency from `package.json` and expose the API at:
+Vercel will install the `mongodb` and `resend` dependencies from `package.json` and expose the API at:
 
 ```text
 /api/state
+/api/email
 ```
 
 The project also has separate API folders for each data group:
@@ -39,7 +51,7 @@ api/init-db/index.js             -> /api/init-db
 
 Each endpoint maps to its own MongoDB collection, so the project files and database data are separated by purpose.
 
-## 3. Automatic MongoDB Updates
+## 4. Automatic MongoDB Updates
 
 After deployment, the browser sync script automatically sends CineBook data changes to MongoDB. You do not need a manual sync button.
 

@@ -53,6 +53,65 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
             : [];
     }
 
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function getUserEmail(username) {
+        const user = String(username || localStorage.getItem(LS_USER) || '').trim();
+        if (!user) return '';
+        return user.includes('@') ? user : `${user}@student.edu`;
+    }
+
+    function updateEmailLogStatus(emailId, updates) {
+        const emails = JSON.parse(localStorage.getItem('cinebook:emailLog') || '[]');
+        const email = emails.find(item => item.id === emailId);
+        if (!email) return;
+        Object.assign(email, updates);
+        localStorage.setItem('cinebook:emailLog', JSON.stringify(emails));
+    }
+
+    async function sendCineBookEmail(emailLog) {
+        const emails = JSON.parse(localStorage.getItem('cinebook:emailLog') || '[]');
+        emails.push(emailLog);
+        localStorage.setItem('cinebook:emailLog', JSON.stringify(emails));
+
+        try {
+            const response = await fetch('/api/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    to: emailLog.to,
+                    subject: emailLog.subject,
+                    text: emailLog.body,
+                    html: `<pre style="font-family: Arial, sans-serif; white-space: pre-wrap; line-height: 1.5;">${escapeHtml(emailLog.body)}</pre>`,
+                    type: emailLog.type
+                })
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.ok) {
+                throw new Error(result.error || 'Email service failed');
+            }
+            updateEmailLogStatus(emailLog.id, {
+                status: 'sent',
+                sentAt: new Date().toLocaleString(),
+                providerId: result.id || ''
+            });
+        } catch (error) {
+            updateEmailLogStatus(emailLog.id, {
+                status: 'send_failed',
+                error: error.message || 'Email failed',
+                failedAt: new Date().toLocaleString()
+            });
+            console.error('CineBook email failed:', error);
+        }
+    }
+
     function getMovieSource() {
         try {
             const adminMovies = getAdminMovies();
@@ -786,18 +845,16 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
         localStorage.setItem('cinebook:pendingBookingId', bookingId);
 
         // Don't clear seat selection - seats are now specific to this showtime
-        // Simulate sending email notification
         sendEmailNotification(booking);
 
         alert(`Booking Created! (Booking ID: #${bookingId})\n\nProceeding to payment page...\n\nYou have 30 minutes to submit payment proof.`);
         location.href = "payment-submit.html";
     }
 
-    // Email simulation - stores in localStorage
     function sendEmailNotification(booking) {
         const emailLog = {
             id: Date.now(),
-            to: localStorage.getItem(LS_USER) + '@student.edu',
+            to: getUserEmail(booking.username),
             subject: `CineBook Payment Required - Booking #${booking.id}`,
             body: `
 Dear ${localStorage.getItem(LS_USER)},
@@ -831,12 +888,44 @@ Thank you!
 CineBook Admin
             `,
             sentAt: new Date().toLocaleString(),
-            status: 'sent'
+            status: 'queued',
+            type: 'booking_payment_required',
+            bookingId: booking.id
         };
 
-        const emails = JSON.parse(localStorage.getItem('cinebook:emailLog') || '[]');
-        emails.push(emailLog);
-        localStorage.setItem('cinebook:emailLog', JSON.stringify(emails));
+        sendCineBookEmail(emailLog);
+    }
+
+    function sendPaymentSubmittedEmail(booking, submission) {
+        if (!booking) return;
+        sendCineBookEmail({
+            id: Date.now(),
+            to: getUserEmail(booking.username),
+            subject: `CineBook Payment Submitted - Booking #${booking.id}`,
+            body: `
+Dear ${booking.username || 'CineBook customer'},
+
+We received your payment proof and it is now waiting for admin review.
+
+=== PAYMENT SUBMISSION ===
+Booking ID: #${booking.id}
+Movie: ${booking.movie}
+Reference Number: ${submission.referenceNumber}
+Sender Name: ${submission.senderName}
+Submitted At: ${submission.submittedAt}
+Amount: PHP ${booking.price}
+
+We will send another email after your payment is approved or rejected.
+
+Thank you!
+CineBook Admin
+            `,
+            sentAt: new Date().toLocaleString(),
+            status: 'queued',
+            type: 'payment_submitted',
+            bookingId: booking.id,
+            submissionId: submission.id
+        });
     }
 
 
@@ -1146,6 +1235,8 @@ CineBook Admin
         updateSeatForShowtime,
         getAvailableSeatsForShowtime,
         sendEmailNotification,
+        sendPaymentSubmittedEmail,
+        sendCineBookEmail,
         checkExpiredPayments,
         togglePasswordVisibility,
         nextSlide,
@@ -1177,6 +1268,8 @@ window.updateSeatForShowtime = CineBook.updateSeatForShowtime;   // for showtime
 window.togglePasswordVisibility = CineBook.togglePasswordVisibility;
 window.nextSlide = CineBook.nextSlide;
 window.previousSlide = CineBook.previousSlide;
+window.sendCineBookEmail = CineBook.sendCineBookEmail;
+window.sendPaymentSubmittedEmail = CineBook.sendPaymentSubmittedEmail;
 
 // ========== ADMIN PANEL FUNCTIONS ==========
 
@@ -1186,6 +1279,12 @@ const ADMIN_LS_LOGGED = ADMIN_LS_PREFIX + 'loggedIn';
 const ADMIN_LS_MOVIES = ADMIN_LS_PREFIX + 'movies';
 const ADMIN_LS_THEATERS = ADMIN_LS_PREFIX + 'theaters';
 const ADMIN_LS_SHOWTIMES = ADMIN_LS_PREFIX + 'showtimes';
+
+function getRecipientEmail(username) {
+    const user = String(username || '').trim();
+    if (!user) return '';
+    return user.includes('@') ? user : `${user}@student.edu`;
+}
 
 // Default admin credentials (should be hashed in production)
 const DEFAULT_ADMIN = {
@@ -1892,6 +1991,38 @@ function approvePaymentSubmission(submissionId, bookingId) {
     const payments = JSON.parse(localStorage.getItem('cinebook:payments') || '[]');
     payments.push(payment);
     localStorage.setItem('cinebook:payments', JSON.stringify(payments));
+
+    if (typeof window.sendCineBookEmail === 'function') {
+        window.sendCineBookEmail({
+            id: Date.now() + 1,
+            to: getRecipientEmail(booking.username),
+            subject: `CineBook Payment Approved - Booking #${booking.id}`,
+            body: `
+Dear ${booking.username || 'CineBook customer'},
+
+Your payment has been approved and your booking is now confirmed.
+
+=== CONFIRMED BOOKING ===
+Booking ID: #${booking.id}
+Movie: ${booking.movie}
+${booking.showtime ? `Theater: ${booking.showtime.theater}
+Showtime: ${booking.showtime.dateTime}` : ''}
+Seats: ${Array.isArray(booking.seats) ? booking.seats.join(', ') : ''}
+Total Amount: PHP ${booking.price}
+Paid At: ${booking.paidAt}
+
+Please show your booking details at the theatre.
+
+Thank you!
+CineBook Admin
+            `,
+            sentAt: new Date().toLocaleString(),
+            status: 'queued',
+            type: 'payment_approved',
+            bookingId: booking.id,
+            submissionId
+        });
+    }
     
     alert('Payment approved. Booking confirmed.');
     closeReviewModal();
@@ -1916,6 +2047,34 @@ function rejectPaymentSubmission(submissionId, bookingId) {
     booking.status = 'payment_rejected';
     booking.rejectionReason = reason;
     localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
+
+    if (typeof window.sendCineBookEmail === 'function') {
+        window.sendCineBookEmail({
+            id: Date.now() + 1,
+            to: getRecipientEmail(booking.username),
+            subject: `CineBook Payment Rejected - Booking #${booking.id}`,
+            body: `
+Dear ${booking.username || 'CineBook customer'},
+
+Your payment proof was reviewed, but it could not be approved.
+
+=== REJECTION DETAILS ===
+Booking ID: #${booking.id}
+Movie: ${booking.movie}
+Reason: ${reason}
+
+Please submit a new valid payment proof before your reservation expires.
+
+Thank you!
+CineBook Admin
+            `,
+            sentAt: new Date().toLocaleString(),
+            status: 'queued',
+            type: 'payment_rejected',
+            bookingId: booking.id,
+            submissionId
+        });
+    }
     
     alert('Payment rejected. User will be notified to resubmit.');
     closeReviewModal();

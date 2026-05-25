@@ -349,7 +349,7 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
                     <div style="padding: 20px; background: rgba(100, 100, 100, 0.15); border: 2px solid #555; border-radius: 8px; cursor: not-allowed; opacity: 0.5; text-align: center;">
                         <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 18px; color: #999;">${theater.name}</p>
                         <p style="margin: 0 0 5px 0; font-size: 14px; color: #777;">No showtimes</p>
-                        <p style="margin: 0; font-size: 12px; color: #999;">💰 ₱${theater.seatPrice || 200}/seat</p>
+                        <p style="margin: 0; font-size: 12px; color: #999;">₱${theater.seatPrice || 200}/seat</p>
                     </div>
                 `;
             }
@@ -358,8 +358,8 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
             return `
                 <div class="theater-card" data-theater-id="${theater.id}" data-theater-name="${encodeURIComponent(theater.name)}" data-theater-price="${theater.seatPrice || 200}" style="padding: 20px; background: rgba(229, 9, 20, 0.1); border: 2px solid #e50914; border-radius: 8px; cursor: pointer; transition: all 200ms ease; text-align: center;" onmouseover="this.style.background='rgba(229, 9, 20, 0.2)'" onmouseout="this.style.background='rgba(229, 9, 20, 0.1)'">
                     <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 18px; color: #e50914;">${theater.name}</p>
-                    <p style="margin: 0 0 5px 0; font-size: 14px; color: #4caf50;">✓ Available</p>
-                    <p style="margin: 0; font-size: 12px; color: #999;">💰 ₱${theater.seatPrice || 200}/seat</p>
+                    <p style="margin: 0 0 5px 0; font-size: 14px; color: #4caf50;">Available</p>
+                    <p style="margin: 0; font-size: 12px; color: #999;">₱${theater.seatPrice || 200}/seat</p>
                 </div>
             `;
         }).join('');
@@ -400,9 +400,9 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
             
             return `
                 <div class="time-card" data-showtime-id="${showtime.id}" data-showtime-date="${showtime.date}" data-showtime-time="${showtime.time}" data-available-seats="${availableSeats}" style="padding: 20px; background: ${isFull ? 'rgba(100, 100, 100, 0.2)' : 'rgba(229, 9, 20, 0.1)'}; border: 2px solid ${isFull ? '#666' : '#e50914'}; border-radius: 8px; cursor: ${isFull ? 'not-allowed' : 'pointer'}; transition: all 200ms ease; opacity: ${isFull ? 0.6 : 1}; text-align: center;" onmouseover="this.style.background='${isFull ? 'rgba(100, 100, 100, 0.2)' : 'rgba(229, 9, 20, 0.2)'}'" onmouseout="this.style.background='${isFull ? 'rgba(100, 100, 100, 0.2)' : 'rgba(229, 9, 20, 0.1)'}'">
-                    <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 16px; color: ${isFull ? '#999' : '#e50914'};">🕐 ${showtime.time}</p>
-                    <p style="margin: 0 0 5px 0; font-size: 12px; color: #999;">📅 ${showtime.date}</p>
-                    <p style="margin: 0; font-size: 12px; color: ${isFull ? '#ff6b6b' : '#4caf50'}; font-weight: 600;">${isFull ? '❌ FULLY BOOKED' : `✓ ${availableSeats} seats`}</p>
+                    <p style="margin: 0 0 8px 0; font-weight: 600; font-size: 16px; color: ${isFull ? '#999' : '#e50914'};">${showtime.time}</p>
+                    <p style="margin: 0 0 5px 0; font-size: 12px; color: #999;">${showtime.date}</p>
+                    <p style="margin: 0; font-size: 12px; color: ${isFull ? '#ff6b6b' : '#4caf50'}; font-weight: 600;">${isFull ? 'FULLY BOOKED' : `${availableSeats} seats`}</p>
                 </div>
             `;
         }).join('');
@@ -737,7 +737,7 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
         // Simulate sending email notification
         sendEmailNotification(booking);
 
-        alert(`✓ Booking Created! (Booking ID: #${bookingId})\n\nProceeding to payment page...\n\nYou have 30 minutes to submit payment proof.`);
+        alert(`Booking Created! (Booking ID: #${bookingId})\n\nProceeding to payment page...\n\nYou have 30 minutes to submit payment proof.`);
         location.href = "payment-submit.html";
     }
 
@@ -798,10 +798,19 @@ CineBook Admin
     // --- Slider ---
     const images = ["movie1.jpg", "movie2.jpg", "movie3.jpg"];
     let sliderIndex = 0;
-    function changeSlide() {
-        sliderIndex = (sliderIndex + 1) % images.length;
+    function showSlide(index) {
+        sliderIndex = (index + images.length) % images.length;
         const slide = document.getElementById("slide");
         if (slide) slide.src = images[sliderIndex];
+    }
+    function changeSlide() {
+        showSlide(sliderIndex + 1);
+    }
+    function nextSlide() {
+        showSlide(sliderIndex + 1);
+    }
+    function previousSlide() {
+        showSlide(sliderIndex - 1);
     }
     setInterval(changeSlide, 3000);
 
@@ -857,18 +866,18 @@ CineBook Admin
                 if (reservations.length === 0) {
                     recentRes.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">🎬</div>
+                            <div class="empty-state-icon">No records</div>
                             <p>No reservations yet. Start booking movies!</p>
                         </div>
                     `;
                 } else {
                     recentRes.innerHTML = reservations.slice(-3).reverse().map(res => `
                         <div class="card">
-                            <div class="card-title">🎟️ Reservation</div>
+                            <div class="card-title">Reservation</div>
                             <div class="movie-title">${res.movie}</div>
                             <div class="movie-details">Seats: ${res.seats}</div>
-                            ${res.showtime ? `<div class="movie-details">🏛️ ${res.showtime.theater}</div>` : ''}
-                            ${res.showtime ? `<div class="movie-details">🕐 ${res.showtime.dateTime}</div>` : ''}
+                            ${res.showtime ? `<div class="movie-details">Theater: ${res.showtime.theater}</div>` : ''}
+                            ${res.showtime ? `<div class="movie-details">Showtime: ${res.showtime.dateTime}</div>` : ''}
                             <div class="price">₱${res.price}</div>
                             <span class="status-badge status-confirmed">${res.status}</span>
                         </div>
@@ -881,18 +890,18 @@ CineBook Admin
                 if (reservations.length === 0) {
                     resList.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">🎪</div>
+                            <div class="empty-state-icon">No records</div>
                             <p>No reservations found</p>
                         </div>
                     `;
                 } else {
                     resList.innerHTML = reservations.map(res => `
                         <div class="card">
-                            <div class="card-title">🎟️ Reservation</div>
+                            <div class="card-title">Reservation</div>
                             <div class="movie-title">${res.movie}</div>
                             <div class="movie-details">Seats: ${res.seats}</div>
-                            ${res.showtime ? `<div class="movie-details">🏛️ ${res.showtime.theater}</div>` : ''}
-                            ${res.showtime ? `<div class="movie-details">🕐 ${res.showtime.dateTime}</div>` : ''}
+                            ${res.showtime ? `<div class="movie-details">Theater: ${res.showtime.theater}</div>` : ''}
+                            ${res.showtime ? `<div class="movie-details">Showtime: ${res.showtime.dateTime}</div>` : ''}
                             <div class="price">₱${res.price}</div>
                             <span class="status-badge status-confirmed">${res.status}</span>
                             <div class="button-group">
@@ -909,14 +918,14 @@ CineBook Admin
                 if (payments.length === 0) {
                     payList.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">💰</div>
+                            <div class="empty-state-icon">No records</div>
                             <p>No payment history</p>
                         </div>
                     `;
                 } else {
                     payList.innerHTML = payments.map(pay => `
                         <div class="card">
-                            <div class="card-title">💳 Payment</div>
+                            <div class="card-title">Payment</div>
                             <div class="movie-title">${pay.movie}</div>
                             <div class="movie-details">Method: ${pay.method}</div>
                             <div class="movie-details">Date: ${pay.date}</div>
@@ -996,6 +1005,33 @@ CineBook Admin
         // Check for expired payments every 30 seconds
         checkExpiredPayments();
         setInterval(checkExpiredPayments, 30000);
+
+        submitAuthOnEnter();
+    }
+
+    function submitAuthOnEnter() {
+        const username = document.getElementById('username');
+        const password = document.getElementById('password');
+        const adminUsername = document.getElementById('adminUsername');
+        const adminPassword = document.getElementById('adminPassword');
+
+        const submitIfEnter = (handler) => (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                handler();
+            }
+        };
+
+        if (username && password) {
+            const handler = location.pathname.includes('register') ? register : login;
+            username.addEventListener('keydown', submitIfEnter(handler));
+            password.addEventListener('keydown', submitIfEnter(handler));
+        }
+
+        if (adminUsername && adminPassword && typeof adminLogin === 'function') {
+            adminUsername.addEventListener('keydown', submitIfEnter(adminLogin));
+            adminPassword.addEventListener('keydown', submitIfEnter(adminLogin));
+        }
     }
 
     // Check and expire pending bookings that exceeded deadline
@@ -1052,7 +1088,9 @@ CineBook Admin
         updateSeatForShowtime,
         getAvailableSeatsForShowtime,
         sendEmailNotification,
-        checkExpiredPayments
+        checkExpiredPayments,
+        nextSlide,
+        previousSlide
     };
 })();
 
@@ -1077,6 +1115,8 @@ window.loadShowtimesForMovie = CineBook.loadShowtimesForMovie; // for showtime s
 window.selectShowtime = CineBook.selectShowtime;    // for showtime selection
 window.createSeatsForShowtime = CineBook.createSeatsForShowtime; // for showtime-specific seats
 window.updateSeatForShowtime = CineBook.updateSeatForShowtime;   // for showtime-specific seat updates
+window.nextSlide = CineBook.nextSlide;
+window.previousSlide = CineBook.previousSlide;
 
 // ========== ADMIN PANEL FUNCTIONS ==========
 
@@ -1111,7 +1151,7 @@ function adminLogin() {
     const successMsg = document.getElementById('adminSuccessMsg');
     
     if (!username || !password) {
-        errorMsg.textContent = '⚠️ Please enter both username and password.';
+        errorMsg.textContent = 'Please enter both username and password.';
         errorMsg.style.display = 'block';
         successMsg.style.display = 'none';
         return;
@@ -1123,14 +1163,14 @@ function adminLogin() {
             username: username,
             loginTime: new Date().toISOString()
         }));
-        successMsg.textContent = '✓ Login successful! Redirecting...';
+        successMsg.textContent = 'Login successful. Redirecting...';
         successMsg.style.display = 'block';
         errorMsg.style.display = 'none';
         setTimeout(() => {
             location.href = 'admin-dashboard.html';
         }, 500);
     } else {
-        errorMsg.textContent = '⚠️ Invalid username or password.';
+        errorMsg.textContent = 'Invalid username or password.';
         errorMsg.style.display = 'block';
         successMsg.style.display = 'none';
     }
@@ -1196,7 +1236,7 @@ function addMovie() {
     const poster = document.getElementById('moviePoster').value.trim();
     
     if (!title || !genre) {
-        alert('⚠️ Please fill in Title and Genre fields.');
+        alert('Please fill in Title and Genre fields.');
         return;
     }
     
@@ -1216,7 +1256,7 @@ function addMovie() {
                 poster: poster || allMovies[movieIndex].poster || defaultPoster
             };
             saveAdminMovies(allMovies);
-            alert('✓ Movie updated successfully!');
+            alert('Movie updated successfully!');
             clearMovieForm();
             loadMoviesList();
             populateShowtimeDropdowns();
@@ -1237,7 +1277,7 @@ function addMovie() {
     allMovies.push(newMovie);
     saveAdminMovies(allMovies);
     
-    alert('✓ Movie added successfully!');
+    alert('Movie added successfully!');
     clearMovieForm();
     loadMoviesList();
     populateShowtimeDropdowns();
@@ -1251,7 +1291,7 @@ function deleteMovie(movieId) {
         let allShowtimes = getAdminShowtimes();
         allShowtimes = allShowtimes.filter(s => s.movieId !== movieId);
         saveAdminShowtimes(allShowtimes);
-        alert('✓ Movie deleted successfully! Related showtimes were removed.');
+        alert('Movie deleted successfully. Related showtimes were removed.');
         loadMoviesList();
         populateShowtimeDropdowns();
     }
@@ -1353,7 +1393,7 @@ function addTheater() {
     const price = parseInt(document.getElementById('theaterPrice').value) || 200;
     
     if (!name) {
-        alert('⚠️ Please enter a theater name.');
+        alert('Please enter a theater name.');
         return;
     }
     
@@ -1369,7 +1409,7 @@ function addTheater() {
     allTheaters.push(newTheater);
     saveAdminTheaters(allTheaters);
     
-    alert('✓ Theater added successfully!');
+    alert('Theater added successfully!');
     clearTheaterForm();
     loadTheatersList();
     populateShowtimeDropdowns();
@@ -1383,7 +1423,7 @@ function deleteTheater(theaterId) {
         let allShowtimes = getAdminShowtimes();
         allShowtimes = allShowtimes.filter(s => s.theaterId !== theaterId);
         saveAdminShowtimes(allShowtimes);
-        alert('✓ Theater deleted successfully! Related showtimes were removed.');
+        alert('Theater deleted successfully. Related showtimes were removed.');
         loadTheatersList();
         populateShowtimeDropdowns();
     }
@@ -1488,7 +1528,7 @@ function addShowtime() {
     console.log('Elements found:', { movieSelect, theaterSelect, timeSelect });
 
     if (!movieSelect || !theaterSelect || !timeSelect) {
-        alert('⚠️ Showtime form is not ready. Please refresh the page.');
+        alert('Showtime form is not ready. Please refresh the page.');
         return;
     }
 
@@ -1511,11 +1551,11 @@ function addShowtime() {
     console.log('Form values:', { movieId, theaterId, date, time });
 
     if (!movieId || !theaterId || !date || !time) {
-        alert('⚠️ Please fill in all showtime fields.');
+        alert('Please fill in all showtime fields.');
         return;
     }
     if (!ADMIN_SHOWTIME_SLOTS.includes(time)) {
-        alert('⚠️ Please choose one of the available 2-hour time slots.');
+        alert('Please choose one of the available 2-hour time slots.');
         return;
     }
 
@@ -1529,7 +1569,7 @@ function addShowtime() {
     console.log('Found entities:', { movie, theater });
 
     if (!movie || !theater) {
-        alert('⚠️ Selected movie or theater not found.');
+        alert('Selected movie or theater not found.');
         return;
     }
 
@@ -1549,7 +1589,7 @@ function addShowtime() {
     allShowtimes.push(newShowtime);
     saveAdminShowtimes(allShowtimes);
 
-    alert('✓ Showtime created successfully!');
+    alert('Showtime created successfully!');
     clearShowtimeForm();
     loadShowtimesList();
 }
@@ -1559,7 +1599,7 @@ function deleteShowtime(showtimeId) {
         let allShowtimes = getAdminShowtimes();
         allShowtimes = allShowtimes.filter(s => s.id !== showtimeId);
         saveAdminShowtimes(allShowtimes);
-        alert('✓ Showtime deleted successfully!');
+        alert('Showtime deleted successfully!');
         loadShowtimesList();
     }
 }
@@ -1629,7 +1669,7 @@ function cancelBookingAdmin(bookingId) {
         let reservations = JSON.parse(localStorage.getItem('cinebook:reservations') || '[]');
         reservations = reservations.filter(r => r.id !== bookingId);
         localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
-        alert('✓ Booking cancelled successfully!');
+        alert('Booking cancelled successfully!');
         loadBookingsList();
     }
 }
@@ -1750,7 +1790,7 @@ function reviewPaymentSubmission(submissionId, bookingId) {
                 </div>
                 
                 <div style="display: flex; gap: 12px;">
-                    <button onclick="approvePaymentSubmission(${submissionId}, ${bookingId})" style="flex: 1; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer;">✓ Approve Payment</button>
+                    <button onclick="approvePaymentSubmission(${submissionId}, ${bookingId})" style="flex: 1; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer;">Approve Payment</button>
                     <button onclick="rejectPaymentSubmission(${submissionId}, ${bookingId})" style="flex: 1; padding: 12px; background: #f44336; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer;">✗ Reject Payment</button>
                     <button onclick="closeReviewModal()" style="flex: 1; padding: 12px; background: #666; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer;">Close</button>
                 </div>
@@ -1793,7 +1833,7 @@ function approvePaymentSubmission(submissionId, bookingId) {
     payments.push(payment);
     localStorage.setItem('cinebook:payments', JSON.stringify(payments));
     
-    alert('✓ Payment approved! Booking confirmed.');
+    alert('Payment approved. Booking confirmed.');
     closeReviewModal();
     loadPaymentsList();
 }
@@ -1817,7 +1857,7 @@ function rejectPaymentSubmission(submissionId, bookingId) {
     booking.rejectionReason = reason;
     localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
     
-    alert('✓ Payment rejected. User will be notified to resubmit.');
+    alert('Payment rejected. User will be notified to resubmit.');
     closeReviewModal();
     loadPaymentsList();
 }
@@ -1862,7 +1902,7 @@ function loadPaymentReviewList() {
                 <td>Booking #${sub.bookingId}</td>
                 <td>${sub.fileName}</td>
                 <td>${sub.approvedAt}</td>
-                <td><span style="background: rgba(76, 175, 80, 0.2); padding: 4px 10px; border-radius: 4px; color: #81c784;">✓ Approved</span></td>
+                <td><span style="background: rgba(76, 175, 80, 0.2); padding: 4px 10px; border-radius: 4px; color: #81c784;">Approved</span></td>
                 <td><button class="admin-btn" onclick="viewPaymentProof(${sub.id})">View</button></td>
             </tr>
         `);
@@ -1950,7 +1990,7 @@ function reviewPaymentSubmission(submissionId, bookingId) {
                 </div>
                 
                 <div style="display: flex; gap: 10px;">
-                    <button onclick="approvePaymentSubmission(${submissionId}, ${bookingId})" style="flex: 1; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; transition: all 200ms ease;" onmouseover="this.style.background='#45a049'" onmouseout="this.style.background='#4caf50'">✓ Approve Payment</button>
+                    <button onclick="approvePaymentSubmission(${submissionId}, ${bookingId})" style="flex: 1; padding: 12px; background: #4caf50; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; transition: all 200ms ease;" onmouseover="this.style.background='#45a049'" onmouseout="this.style.background='#4caf50'">Approve Payment</button>
                     <button onclick="rejectPaymentSubmission(${submissionId}, ${bookingId})" style="flex: 1; padding: 12px; background: #f44336; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; transition: all 200ms ease;" onmouseover="this.style.background='#d32f2f'" onmouseout="this.style.background='#f44336'">✗ Reject Payment</button>
                     <button onclick="closeReviewModal()" style="flex: 1; padding: 12px; background: #666; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; transition: all 200ms ease;" onmouseover="this.style.background='#777'" onmouseout="this.style.background='#666'">Close</button>
                 </div>
@@ -2023,7 +2063,7 @@ function viewEmailContent(emailId) {
     const modal = `
         <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;" id="emailModal">
             <div style="background: #1a1a1a; border: 1px solid #e50914; border-radius: 10px; padding: 30px; max-width: 700px; max-height: 90vh; overflow-y: auto; width: 90%;">
-                <h2 style="color: #e50914; margin-top: 0;">📧 Email Content</h2>
+                <h2 style="color: #e50914; margin-top: 0;">Email Content</h2>
                 <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; margin-bottom: 15px;">
                     <p><strong>To:</strong> ${email.to}</p>
                     <p><strong>Subject:</strong> ${email.subject}</p>
@@ -2128,7 +2168,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function saveSettings() {
     const platformName = document.getElementById('settingsPlatformName').value;
-    alert('✓ Settings saved successfully! (Demo mode - settings not persisted)');
+    alert('Settings saved successfully. (Demo mode - settings not persisted)');
 }
 
 function exportData() {
@@ -2152,11 +2192,11 @@ function exportData() {
     a.click();
     URL.revokeObjectURL(url);
     
-    alert('✓ Data exported successfully!');
+    alert('Data exported successfully!');
 }
 
 function resetData() {
-    if (confirm('⚠️ WARNING: This will delete ALL system data (movies, theaters, bookings, payments). This cannot be undone. Are you sure?')) {
+    if (confirm('WARNING: This will delete ALL system data (movies, theaters, bookings, payments). This cannot be undone. Are you sure?')) {
         if (confirm('Are you REALLY sure? Type "yes" to confirm.')) {
             localStorage.removeItem(ADMIN_LS_MOVIES);
             localStorage.removeItem(ADMIN_LS_THEATERS);
@@ -2166,7 +2206,7 @@ function resetData() {
             localStorage.removeItem('cinebook:paymentSubmissions');
             localStorage.removeItem('cinebook:emailLog');
             localStorage.removeItem('cinebook:pendingBookingId');
-            alert('✓ All data has been reset. The system will reload.');
+            alert('All data has been reset. The system will reload.');
             location.reload();
         }
     }
@@ -2219,3 +2259,4 @@ window.approvePaymentSubmission = approvePaymentSubmission;
 function switchAdminTab(tabName) {
     // This is defined in admin-dashboard.html
 }
+

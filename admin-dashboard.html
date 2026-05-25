@@ -312,19 +312,19 @@
         <!-- Sidebar Navigation -->
         <aside class="admin-sidebar">
             <div class="admin-sidebar-header">
-                <h1>🎬 CineBook</h1>
+                <h1>CineBook</h1>
                 <p>Admin Panel</p>
             </div>
             <nav>
                 <ul class="admin-nav-menu">
-                    <li><button class="admin-nav-btn active" onclick="switchAdminTab('dashboard', event)">📊 Dashboard</button></li>
-                    <li><button class="admin-nav-btn" onclick="switchAdminTab('movies', event)">🎥 Movies</button></li>
-                    <li><button class="admin-nav-btn" onclick="switchAdminTab('theaters', event)">🏛️ Theaters</button></li>
-                    <li><button class="admin-nav-btn" onclick="switchAdminTab('showtimes', event)">🕐 Showtimes</button></li>
-                    <li><button class="admin-nav-btn" onclick="switchAdminTab('bookings', event)">🎟️ Bookings</button></li>
-                    <li><button class="admin-nav-btn" onclick="switchAdminTab('payment-review', event)">💰 Payment Review</button></li>
-                    <li><button class="admin-nav-btn" onclick="switchAdminTab('emails', event)">📧 Email Log</button></li>
-                    <li><button class="admin-nav-btn" onclick="switchAdminTab('settings', event)">⚙️ Settings</button></li>
+                    <li><button class="admin-nav-btn active" onclick="switchAdminTab('dashboard', event)">Dashboard</button></li>
+                    <li><button class="admin-nav-btn" onclick="switchAdminTab('movies', event)">Movies</button></li>
+                    <li><button class="admin-nav-btn" onclick="switchAdminTab('theaters', event)">Theaters</button></li>
+                    <li><button class="admin-nav-btn" onclick="switchAdminTab('showtimes', event)">Showtimes</button></li>
+                    <li><button class="admin-nav-btn" onclick="switchAdminTab('bookings', event)">Bookings</button></li>
+                    <li><button class="admin-nav-btn" onclick="switchAdminTab('payment-review', event)">Payment Review</button></li>
+                    <li><button class="admin-nav-btn" onclick="switchAdminTab('emails', event)">Email Log</button></li>
+                    <li><button class="admin-nav-btn" onclick="switchAdminTab('settings', event)">Settings</button></li>
                 </ul>
             </nav>
         </aside>
@@ -332,7 +332,7 @@
         <!-- Main Content -->
         <main class="admin-content">
             <div class="admin-header">
-                <h2 id="pageTitle">📊 Dashboard</h2>
+                <h2 id="pageTitle">Dashboard</h2>
                 <div class="admin-header-actions">
                     <button class="admin-logout-btn" onclick="adminLogout()">Logout</button>
                 </div>
@@ -659,14 +659,14 @@
             if (target) target.classList.add('active');
             
             const titles = {
-                'dashboard': '📊 Dashboard',
-                'movies': '🎥 Movies',
-                'theaters': '🏛️ Theaters',
-                'showtimes': '🕐 Showtimes',
-                'bookings': '🎟️ Bookings',
-                'payment-review': '💰 Payment Review',
-                'emails': '📧 Email Log',
-                'settings': '⚙️ Settings'
+                'dashboard': 'Dashboard',
+                'movies': 'Movies',
+                'theaters': 'Theaters',
+                'showtimes': 'Showtimes',
+                'bookings': 'Bookings',
+                'payment-review': 'Payment Review',
+                'emails': 'Email Log',
+                'settings': 'Settings'
             };
             document.getElementById('pageTitle').textContent = titles[tabName] || 'Admin Panel';
             
@@ -688,3 +688,4 @@
     </script>
 </body>
 </html>
+

@@ -25,6 +25,12 @@ const OBJECT_COLLECTIONS = {
 
 const LOCAL_STORAGE_COLLECTION = 'local_storage';
 const METADATA_COLLECTION = 'app_metadata';
+const REQUIRED_COLLECTIONS = [
+  ...Object.values(ARRAY_COLLECTIONS),
+  ...Object.values(OBJECT_COLLECTIONS),
+  LOCAL_STORAGE_COLLECTION,
+  METADATA_COLLECTION
+];
 
 let clientPromise;
 
@@ -44,6 +50,17 @@ function getClient() {
 async function getDb() {
   const client = await getClient();
   return client.db(MONGODB_DB);
+}
+
+async function ensureCollection(db, collectionName) {
+  const exists = await db.listCollections({ name: collectionName }).hasNext();
+  if (!exists) {
+    await db.createCollection(collectionName);
+  }
+}
+
+async function ensureRequiredCollections(db) {
+  await Promise.all(REQUIRED_COLLECTIONS.map((collectionName) => ensureCollection(db, collectionName)));
 }
 
 function normalizeState(input = {}) {
@@ -87,6 +104,7 @@ function makeArrayDocs(items, collectionName) {
 }
 
 async function readArrayCollection(db, collectionName) {
+  await ensureCollection(db, collectionName);
   const docs = await db.collection(collectionName)
     .find({})
     .sort({ _cinebookOrder: 1, _id: 1 })
@@ -95,6 +113,7 @@ async function readArrayCollection(db, collectionName) {
 }
 
 async function replaceArrayCollection(db, collectionName, items) {
+  await ensureCollection(db, collectionName);
   const collection = db.collection(collectionName);
   const docs = makeArrayDocs(Array.isArray(items) ? items : [], collectionName);
   await collection.deleteMany({});
@@ -105,11 +124,13 @@ async function replaceArrayCollection(db, collectionName, items) {
 }
 
 async function readObjectCollection(db, collectionName) {
+  await ensureCollection(db, collectionName);
   const doc = await db.collection(collectionName).findOne({ _id: STATE_ID });
   return doc ? withoutInternalFields(doc) : {};
 }
 
 async function replaceObjectCollection(db, collectionName, value) {
+  await ensureCollection(db, collectionName);
   const updatedAt = new Date();
   const next = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   await db.collection(collectionName).replaceOne(
@@ -121,6 +142,7 @@ async function replaceObjectCollection(db, collectionName, value) {
 }
 
 async function readLocalStorage(db) {
+  await ensureCollection(db, LOCAL_STORAGE_COLLECTION);
   const storageDocs = await db.collection(LOCAL_STORAGE_COLLECTION).find({}).sort({ key: 1 }).toArray();
   return storageDocs.reduce((dump, doc) => {
     dump[doc.key] = doc.value;
@@ -129,6 +151,7 @@ async function readLocalStorage(db) {
 }
 
 async function replaceLocalStorage(db, localStorage) {
+  await ensureCollection(db, LOCAL_STORAGE_COLLECTION);
   const collection = db.collection(LOCAL_STORAGE_COLLECTION);
   const next = localStorage && typeof localStorage === 'object' && !Array.isArray(localStorage)
     ? localStorage
@@ -148,6 +171,7 @@ async function replaceLocalStorage(db, localStorage) {
 }
 
 async function readSeparatedState(db) {
+  await ensureRequiredCollections(db);
   const state = normalizeState();
 
   await Promise.all(
@@ -206,6 +230,7 @@ async function removeLegacyState(db) {
 }
 
 async function writeMetadata(db, source) {
+  await ensureCollection(db, METADATA_COLLECTION);
   const updatedAt = new Date();
   await db.collection(METADATA_COLLECTION).replaceOne(
     { _id: STATE_ID },
@@ -221,6 +246,7 @@ async function writeMetadata(db, source) {
 }
 
 async function writeSeparatedState(db, state, source) {
+  await ensureRequiredCollections(db);
   const normalized = normalizeState(state);
 
   for (const [stateKey, collectionName] of Object.entries(ARRAY_COLLECTIONS)) {
@@ -242,8 +268,11 @@ module.exports = {
   OBJECT_COLLECTIONS,
   LOCAL_STORAGE_COLLECTION,
   METADATA_COLLECTION,
+  REQUIRED_COLLECTIONS,
   STATE_ID,
   getDb,
+  ensureCollection,
+  ensureRequiredCollections,
   normalizeState,
   readArrayCollection,
   replaceArrayCollection,

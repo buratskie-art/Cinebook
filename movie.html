@@ -8,54 +8,59 @@
 </head>
 <body>
 
-    <a id="backButton" href="index.html">← Back</a>
+    <a id="backButton" href="index.html">Back</a>
 
-    <h1 id="title"></h1>
+    <main class="movie-detail-page">
+        <section class="movie-detail-grid">
+            <div class="movie-poster-panel">
+                <h1 id="title"></h1>
+                <div id="posterWrap">
+                    <img id="poster" src="" alt="Movie poster">
+                </div>
+                <div class="movie-meta-strip">
+                    <div id="year"></div>
+                    <div id="genre"></div>
+                </div>
+            </div>
 
-    <div id="posterWrap">
-        <img id="poster" src="" alt="Movie poster">
-    </div>
+            <div class="movie-flow-panel">
+                <div id="synopsisWrap" class="movie-flow-card synopsis-card">
+                    <div id="synopsis"></div>
+                </div>
 
-    <div id="year"></div>
-    <div id="genre"></div>
-    <div id="synopsisWrap">
-        <div id="synopsis"></div>
-    </div>
+                <div id="theaterSection" class="movie-flow-card" style="display:none;">
+                    <h2>Select Theater</h2>
+                    <div id="theatersContainer"></div>
+                </div>
 
-    <!-- Theater Selection -->
-    <div id="theaterSection" style="display:none; margin: 30px 0; padding: 20px; background: linear-gradient(135deg, #222 0%, #1a1a1a 100%); border-radius: 10px; border: 1px solid rgba(229, 9, 20, 0.2);">
-        <h2>🎭 Select Theater</h2>
-        <div id="theatersContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;"></div>
-    </div>
+                <div id="timeSection" class="movie-flow-card" style="display:none;">
+                    <h2>Select Time Slot</h2>
+                    <p class="selected-theater-line">Theater: <strong id="selectedTheaterDisplayText"></strong></p>
+                    <div id="timeSlotsContainer"></div>
+                </div>
 
-    <!-- Time Slot Selection -->
-    <div id="timeSection" style="display:none; margin: 30px 0; padding: 20px; background: linear-gradient(135deg, #222 0%, #1a1a1a 100%); border-radius: 10px; border: 1px solid rgba(229, 9, 20, 0.2);">
-        <h2>🕐 Select Time Slot</h2>
-        <p style="color: #999; margin-bottom: 15px;">Theater: <strong id="selectedTheaterDisplayText" style="color: #e50914;"></strong></p>
-        <div id="timeSlotsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;"></div>
-    </div>
+                <div id="selectedShowtimeInfo" class="movie-flow-card selected-showtime-card" style="display:none;">
+                    <p><strong>Selected Theater:</strong> <span id="selectedTheaterText"></span></p>
+                    <p><strong>Selected Time:</strong> <span id="selectedShowtimeText"></span></p>
+                    <p><strong>Price per Seat:</strong> PHP <span id="selectedPriceText">0</span></p>
+                </div>
+            </div>
+        </section>
 
-    <!-- Selected Showtime Info -->
-    <div id="selectedShowtimeInfo" style="display:none; margin: 20px 0; padding: 15px; background: rgba(76, 175, 80, 0.1); border-left: 3px solid #4caf50; border-radius: 5px;">
-        <p><strong>Selected Theater:</strong> <span id="selectedTheaterText"></span></p>
-        <p><strong>Selected Time:</strong> <span id="selectedShowtimeText"></span></p>
-        <p><strong>Price per Seat:</strong> ₱<span id="selectedPriceText">0</span></p>
-    </div>
-
-    <!-- Seat Selection (Hidden until time selected) -->
-    <div id="seatSection" style="display:none;">
-        <h2>Select Your Seats</h2>
-        <p>Selected: <span id="count">0</span> seats | Total: ₱<span id="total">0</span></p>
-        <p style="color: #999; font-size: 13px;">Capacity: 240 seats in Blocks A, B, and C</p>
-        <div class="seat-legend">
-            <span><i class="legend-seat available"></i> Available</span>
-            <span><i class="legend-seat selected"></i> Selected</span>
-            <span><i class="legend-seat pending"></i> Pending Verification</span>
-            <span><i class="legend-seat reserved"></i> Reserved</span>
-        </div>
-        <div class="seats" id="seatContainer"></div>
-        <button onclick="confirmBooking()">Proceed to Payment Instructions</button>
-    </div>
+        <section id="seatSection" class="seat-section-panel" style="display:none;">
+            <h2>Select Your Seats</h2>
+            <p>Selected: <span id="count">0</span> seats | Total: PHP <span id="total">0</span></p>
+            <p style="color: #999; font-size: 13px;">Capacity: 240 seats in Blocks A, B, and C</p>
+            <div class="seat-legend">
+                <span><i class="legend-seat available"></i> Available</span>
+                <span><i class="legend-seat selected"></i> Selected</span>
+                <span><i class="legend-seat pending"></i> Pending Verification</span>
+                <span><i class="legend-seat reserved"></i> Reserved</span>
+            </div>
+            <div class="seats" id="seatContainer"></div>
+            <button onclick="confirmBooking()">Proceed to Payment Instructions</button>
+        </section>
+    </main>
 
     <script src="database.js"></script>
     <script src="cinebook-data-sync.js"></script>

@@ -2469,6 +2469,30 @@ header {
     overflow-x: auto;
 }
 
+.seat-section-heading {
+    width: min(720px, 100%);
+    margin: 0 auto 18px;
+    text-align: center;
+}
+
+.seat-section-heading h2 {
+    margin-bottom: 8px;
+}
+
+.seat-section-heading p {
+    margin: 6px 0;
+}
+
+.seat-capacity-note {
+    color: #999;
+    font-size: 13px;
+}
+
+.seat-section-heading .seat-legend {
+    margin-top: 12px;
+    margin-bottom: 0;
+}
+
 .seat-section-panel .seats {
     width: max-content;
     min-width: 100%;

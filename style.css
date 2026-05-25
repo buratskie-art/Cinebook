@@ -1715,6 +1715,35 @@ header {
     color: #e49a8d;
 }
 
+.auth-message.success {
+    color: #8fd8a8;
+}
+
+.auth-message.error {
+    color: #ff9b9b;
+}
+
+.auth-form button:disabled {
+    cursor: wait;
+    opacity: 0.72;
+}
+
+.link-button {
+    margin-top: 12px;
+    background: transparent !important;
+    border: 1px solid rgba(215, 173, 80, 0.35) !important;
+    color: #f4d28a !important;
+}
+
+.forgot-panel,
+.otp-group {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid rgba(215, 173, 80, 0.22);
+    border-radius: 8px;
+    background: rgba(255, 244, 215, 0.04);
+}
+
 .terms-check {
     display: flex;
     gap: 10px;
@@ -2177,15 +2206,18 @@ header {
    Save the uploaded curtain image as assets/theatre-curtain-bg.png. */
 body:has(.curtain-valance) {
     background:
-        linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.82)),
-        url("assets/theatre-curtain-bg.png") center top / min(100%, 1180px) auto no-repeat,
+        linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.78)),
+        url("assets/theatre-curtain-bg.png") center top / cover no-repeat fixed,
         #050303 !important;
 }
 
 body:has(.curtain-valance)::before {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
     background:
-        radial-gradient(ellipse at 50% 38%, rgba(255, 214, 126, 0.12), transparent 30%),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.72), transparent 18%, transparent 82%, rgba(0, 0, 0, 0.72)) !important;
+        radial-gradient(ellipse at 50% 38%, rgba(255, 214, 126, 0.08), transparent 32%),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.52), transparent 20%, transparent 80%, rgba(0, 0, 0, 0.52)) !important;
 }
 
 .curtain-rod,
@@ -2205,7 +2237,7 @@ header {
 
 @media (max-width: 760px) {
     body:has(.curtain-valance) {
-        background-size: 980px auto, min(100%, 760px) auto, auto !important;
+        background-size: auto, cover, auto !important;
         background-position: center top, center top, center !important;
     }
 

@@ -3,6 +3,8 @@
     const CINEBOOK_KEYS = new Set([
         'cinebook:user',
         'cinebook:pass',
+        'cinebook:email',
+        'cinebook:emailVerified',
         'cinebook:memberSince',
         'cinebook:emailNotif',
         'cinebook:promoNotif',
@@ -52,6 +54,8 @@
             users: {
                 username: nativeGetItem.call(localStorage, 'cinebook:user') || '',
                 password: nativeGetItem.call(localStorage, 'cinebook:pass') || '',
+                email: nativeGetItem.call(localStorage, 'cinebook:email') || '',
+                emailVerified: nativeGetItem.call(localStorage, 'cinebook:emailVerified') || '',
                 memberSince: nativeGetItem.call(localStorage, 'cinebook:memberSince') || ''
             },
             preferences: {
@@ -95,6 +99,8 @@
             if (next.users) {
                 if (next.users.username) nativeSetItem.call(localStorage, 'cinebook:user', next.users.username);
                 if (next.users.password) nativeSetItem.call(localStorage, 'cinebook:pass', next.users.password);
+                if (next.users.email) nativeSetItem.call(localStorage, 'cinebook:email', next.users.email);
+                if (next.users.emailVerified) nativeSetItem.call(localStorage, 'cinebook:emailVerified', next.users.emailVerified);
                 if (next.users.memberSince) nativeSetItem.call(localStorage, 'cinebook:memberSince', next.users.memberSince);
             }
 

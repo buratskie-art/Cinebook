@@ -15,6 +15,8 @@ const CineBook = (() => {
 const LS_PREFIX = 'cinebook:';
 const LS_USER = LS_PREFIX + 'user';
 const LS_PASS = LS_PREFIX + 'pass';
+const LS_EMAIL = LS_PREFIX + 'email';
+const LS_EMAIL_VERIFIED = LS_PREFIX + 'emailVerified';
 const LS_LOGGED = LS_PREFIX + 'loggedIn';
 const LS_SELECTED_SEATS = (movieKey) => `${LS_PREFIX}seats:${movieKey}`;
 const LS_RESERVATIONS = LS_PREFIX + 'reservations';
@@ -63,6 +65,8 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
     }
 
     function getUserEmail(username) {
+        const savedEmail = String(localStorage.getItem(LS_EMAIL) || '').trim();
+        if (isValidEmail(savedEmail)) return savedEmail;
         const user = String(username || localStorage.getItem(LS_USER) || '').trim();
         if (!user) return '';
         return user.includes('@') ? user : `${user}@student.edu`;
@@ -102,6 +106,7 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
                 sentAt: new Date().toLocaleString(),
                 providerId: result.id || ''
             });
+            return true;
         } catch (error) {
             updateEmailLogStatus(emailLog.id, {
                 status: 'send_failed',
@@ -109,6 +114,7 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
                 failedAt: new Date().toLocaleString()
             });
             console.error('CineBook email failed:', error);
+            return false;
         }
     }
 
@@ -717,16 +723,77 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
         if (button) button.textContent = isHidden ? 'Hide' : 'Show';
     }
 
-    function register() {
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(email || '').trim());
+    }
+
+    function createOtp() {
+        return String(Math.floor(100000 + Math.random() * 900000));
+    }
+
+    function setMessage(elementId, message, type = '') {
+        const messageEl = document.getElementById(elementId);
+        if (!messageEl) return;
+        messageEl.textContent = message;
+        messageEl.className = `auth-message ${type}`.trim();
+    }
+
+    function setButtonBusy(buttonId, busy, label) {
+        const button = document.getElementById(buttonId);
+        if (!button) return;
+        button.disabled = busy;
+        if (label) button.textContent = label;
+    }
+
+    async function sendOtpEmail(email, otp, purpose) {
+        const purposeText = purpose === 'password_reset' ? 'password reset' : 'account verification';
+        return sendCineBookEmail({
+            id: Date.now(),
+            to: email,
+            subject: `CineBook ${purposeText} code`,
+            body: `
+Dear CineBook user,
+
+Your ${purposeText} code is:
+
+${otp}
+
+This code expires in 10 minutes. If you did not request this, you can ignore this email.
+
+Thank you!
+CineBook Admin
+            `,
+            sentAt: new Date().toLocaleString(),
+            status: 'queued',
+            type: purpose,
+            email
+        });
+    }
+
+    async function register() {
         const userEl = document.getElementById("username");
+        const emailEl = document.getElementById("email");
         const passEl = document.getElementById("password");
+        const otpEl = document.getElementById("emailOtp");
         const termsEl = document.getElementById("termsAgree");
         const messageEl = document.getElementById("registerMessage");
         if (!userEl || !passEl) return;
-        const user = userEl.value;
+        const user = userEl.value.trim();
+        const email = emailEl ? emailEl.value.trim().toLowerCase() : '';
         const pass = passEl.value;
+        const otp = otpEl ? otpEl.value.trim() : '';
 
         if (messageEl) messageEl.textContent = '';
+        if (!user) {
+            setMessage('registerMessage', 'Please enter a username.', 'error');
+            return;
+        }
+
+        if (!isValidEmail(email)) {
+            setMessage('registerMessage', 'Please enter a valid email address so we can send booking details.', 'error');
+            return;
+        }
+
         if (termsEl && !termsEl.checked) {
             if (messageEl) messageEl.textContent = 'Please agree to the Terms of Use and Privacy Policy before registering.';
             else alert('Please agree to the Terms of Use and Privacy Policy before registering.');
@@ -740,8 +807,46 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
             return;
         }
 
+        const pending = JSON.parse(sessionStorage.getItem('cinebook:pendingRegistration') || 'null');
+        const now = Date.now();
+        if (!pending || pending.email !== email || pending.username !== user || now > pending.expiresAt) {
+            const nextOtp = createOtp();
+            const nextPending = {
+                username: user,
+                email,
+                otp: nextOtp,
+                expiresAt: now + (10 * 60 * 1000)
+            };
+
+            setButtonBusy('registerSubmit', true, 'Sending code...');
+            const sent = await sendOtpEmail(email, nextOtp, 'email_verification');
+            setButtonBusy('registerSubmit', false, 'Verify & Register');
+
+            if (!sent) {
+                setMessage('registerMessage', 'Could not send the OTP. Check your Resend setup in Vercel, then try again.', 'error');
+                return;
+            }
+
+            sessionStorage.setItem('cinebook:pendingRegistration', JSON.stringify(nextPending));
+            const otpGroup = document.getElementById('otpGroup');
+            if (otpGroup) otpGroup.style.display = 'block';
+            setMessage('registerMessage', 'We sent a 6-digit verification code to your email.', 'success');
+            return;
+        }
+
+        if (otp !== pending.otp) {
+            const otpGroup = document.getElementById('otpGroup');
+            if (otpGroup) otpGroup.style.display = 'block';
+            setMessage('registerMessage', 'Invalid verification code. Please check your email and try again.', 'error');
+            return;
+        }
+
         localStorage.setItem(LS_USER, user);
         localStorage.setItem(LS_PASS, pass);
+        localStorage.setItem(LS_EMAIL, email);
+        localStorage.setItem(LS_EMAIL_VERIFIED, 'true');
+        localStorage.setItem(LS_PREFIX + 'memberSince', new Date().toLocaleDateString());
+        sessionStorage.removeItem('cinebook:pendingRegistration');
         alert("Registered!");
         location.href = "login.html";
     }
@@ -753,13 +858,84 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
         const user = userEl.value;
         const pass = passEl.value;
         if (user === localStorage.getItem(LS_USER) &&
-            pass === localStorage.getItem(LS_PASS)) {
+            pass === localStorage.getItem(LS_PASS) &&
+            localStorage.getItem(LS_EMAIL_VERIFIED) === 'true') {
             localStorage.setItem(LS_LOGGED, "true");
             alert("Login Success!");
             location.href = "index.html";
+        } else if (user === localStorage.getItem(LS_USER) && localStorage.getItem(LS_EMAIL_VERIFIED) !== 'true') {
+            alert("Please verify your email before logging in.");
         } else {
             alert("Invalid login");
         }
+    }
+
+    function toggleForgotPassword() {
+        const panel = document.getElementById('forgotPanel');
+        if (!panel) return;
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        setMessage('forgotMessage', '');
+    }
+
+    async function requestPasswordReset() {
+        const emailEl = document.getElementById('resetEmail');
+        const email = emailEl ? emailEl.value.trim().toLowerCase() : '';
+        const savedEmail = (localStorage.getItem(LS_EMAIL) || '').toLowerCase();
+
+        if (!isValidEmail(email)) {
+            setMessage('forgotMessage', 'Enter the verified email for your account.', 'error');
+            return;
+        }
+
+        if (!savedEmail || email !== savedEmail) {
+            setMessage('forgotMessage', 'That email does not match an existing verified CineBook account on this browser.', 'error');
+            return;
+        }
+
+        const otp = createOtp();
+        sessionStorage.setItem('cinebook:passwordReset', JSON.stringify({
+            email,
+            otp,
+            expiresAt: Date.now() + (10 * 60 * 1000)
+        }));
+
+        setButtonBusy('resetSendBtn', true, 'Sending...');
+        const sent = await sendOtpEmail(email, otp, 'password_reset');
+        setButtonBusy('resetSendBtn', false, 'Send Reset Code');
+
+        if (!sent) {
+            setMessage('forgotMessage', 'Could not send reset code. Check your Resend setup in Vercel, then try again.', 'error');
+            return;
+        }
+
+        const resetFields = document.getElementById('resetFields');
+        if (resetFields) resetFields.style.display = 'block';
+        setMessage('forgotMessage', 'Reset code sent. Enter it below with your new password.', 'success');
+    }
+
+    function resetPasswordWithOtp() {
+        const otp = (document.getElementById('resetOtp')?.value || '').trim();
+        const newPassword = document.getElementById('newPassword')?.value || '';
+        const pending = JSON.parse(sessionStorage.getItem('cinebook:passwordReset') || 'null');
+
+        if (!pending || Date.now() > pending.expiresAt) {
+            setMessage('forgotMessage', 'Reset code expired. Please request a new one.', 'error');
+            return;
+        }
+
+        if (otp !== pending.otp) {
+            setMessage('forgotMessage', 'Invalid reset code.', 'error');
+            return;
+        }
+
+        if (getPasswordStrength(newPassword).score < 4) {
+            setMessage('forgotMessage', 'Please choose a stronger new password.', 'error');
+            return;
+        }
+
+        localStorage.setItem(LS_PASS, newPassword);
+        sessionStorage.removeItem('cinebook:passwordReset');
+        setMessage('forgotMessage', 'Password updated. You can now log in.', 'success');
     }
 
     function updateUserMenu() {
@@ -1167,7 +1343,18 @@ CineBook Admin
             const handler = location.pathname.includes('register') ? register : login;
             username.addEventListener('keydown', submitIfEnter(handler));
             password.addEventListener('keydown', submitIfEnter(handler));
+            const email = document.getElementById('email');
+            const otp = document.getElementById('emailOtp');
+            if (email) email.addEventListener('keydown', submitIfEnter(handler));
+            if (otp) otp.addEventListener('keydown', submitIfEnter(handler));
         }
+
+        const resetEmail = document.getElementById('resetEmail');
+        const resetOtp = document.getElementById('resetOtp');
+        const newPassword = document.getElementById('newPassword');
+        if (resetEmail) resetEmail.addEventListener('keydown', submitIfEnter(requestPasswordReset));
+        if (resetOtp) resetOtp.addEventListener('keydown', submitIfEnter(resetPasswordWithOtp));
+        if (newPassword) newPassword.addEventListener('keydown', submitIfEnter(resetPasswordWithOtp));
 
         if (adminUsername && adminPassword && typeof adminLogin === 'function') {
             adminUsername.addEventListener('keydown', submitIfEnter(adminLogin));
@@ -1237,6 +1424,9 @@ CineBook Admin
         sendEmailNotification,
         sendPaymentSubmittedEmail,
         sendCineBookEmail,
+        requestPasswordReset,
+        resetPasswordWithOtp,
+        toggleForgotPassword,
         checkExpiredPayments,
         togglePasswordVisibility,
         nextSlide,
@@ -1270,6 +1460,9 @@ window.nextSlide = CineBook.nextSlide;
 window.previousSlide = CineBook.previousSlide;
 window.sendCineBookEmail = CineBook.sendCineBookEmail;
 window.sendPaymentSubmittedEmail = CineBook.sendPaymentSubmittedEmail;
+window.requestPasswordReset = CineBook.requestPasswordReset;
+window.resetPasswordWithOtp = CineBook.resetPasswordWithOtp;
+window.toggleForgotPassword = CineBook.toggleForgotPassword;
 
 // ========== ADMIN PANEL FUNCTIONS ==========
 
@@ -1281,6 +1474,8 @@ const ADMIN_LS_THEATERS = ADMIN_LS_PREFIX + 'theaters';
 const ADMIN_LS_SHOWTIMES = ADMIN_LS_PREFIX + 'showtimes';
 
 function getRecipientEmail(username) {
+    const savedEmail = String(localStorage.getItem('cinebook:email') || '').trim();
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(savedEmail)) return savedEmail;
     const user = String(username || '').trim();
     if (!user) return '';
     return user.includes('@') ? user : `${user}@student.edu`;

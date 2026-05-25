@@ -21,6 +21,23 @@ Vercel will install the `mongodb` dependency from `package.json` and expose the 
 /api/state
 ```
 
+The project also has separate API files for each data group:
+
+```text
+/api/movies
+/api/theaters
+/api/showtimes
+/api/reservations
+/api/payments
+/api/payment-submissions
+/api/email-log
+/api/users
+/api/preferences
+/api/local-storage
+```
+
+Each endpoint maps to its own MongoDB collection, so the project files and database data are separated by purpose.
+
 ## 3. Automatic MongoDB Updates
 
 After deployment, the browser sync script automatically sends CineBook data changes to MongoDB. You do not need a manual sync button.

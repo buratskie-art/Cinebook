@@ -64,6 +64,37 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
             .replace(/'/g, '&#39;');
     }
 
+    function buildCineBookEmailHtml(emailLog) {
+        const escapedBody = escapeHtml(emailLog.body || '')
+            .replace(/\n/g, '<br>')
+            .replace(/(^|<br>)([0-9]{6})(<br>|$)/g, '$1<span style="display:inline-block;margin:10px 0;padding:12px 18px;border:1px solid #d6a84f;border-radius:6px;background:#2a0709;color:#f7d77f;font-size:28px;font-weight:800;letter-spacing:6px;">$2</span>$3');
+
+        return `
+            <div style="margin:0;padding:0;background:#080505;">
+                <div style="max-width:640px;margin:0 auto;padding:28px 16px;font-family:Arial,Helvetica,sans-serif;color:#f8ead0;">
+                    <div style="overflow:hidden;border:1px solid rgba(214,168,79,0.45);border-radius:14px;background:#130808;box-shadow:0 18px 46px rgba(0,0,0,0.45);">
+                        <div style="padding:26px 28px;background:linear-gradient(135deg,#7e1018 0%,#2b0608 56%,#080505 100%);border-bottom:1px solid rgba(214,168,79,0.38);">
+                            <div style="font-family:Georgia,'Times New Roman',serif;font-size:30px;font-weight:700;letter-spacing:0.5px;color:#ffe0a3;">CineBook</div>
+                            <div style="margin-top:6px;color:#d8b96b;font-size:13px;text-transform:uppercase;letter-spacing:2px;">Premium Theatre Ticketing</div>
+                        </div>
+                        <div style="padding:28px;background:linear-gradient(180deg,#1a0b0c 0%,#0d0707 100%);">
+                            <h1 style="margin:0 0 18px;font-size:22px;line-height:1.3;color:#fff3d0;">${escapeHtml(emailLog.subject || 'CineBook Notification')}</h1>
+                            <div style="padding:20px;border-left:4px solid #d6a84f;border-radius:8px;background:rgba(255,244,215,0.055);color:#f5e6cb;font-size:15px;line-height:1.65;">
+                                ${escapedBody}
+                            </div>
+                            <div style="margin-top:22px;padding:14px 16px;border-radius:8px;background:rgba(126,16,24,0.32);color:#d7c3a1;font-size:12px;line-height:1.5;">
+                                This message was sent automatically by CineBook. Please keep your booking and payment details for theatre verification.
+                            </div>
+                        </div>
+                        <div style="padding:16px 28px;background:#070505;border-top:1px solid rgba(214,168,79,0.18);color:#9f8b6d;font-size:12px;text-align:center;">
+                            CineBook | Classic cinema reservations and ticketing
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     function getUserEmail(username) {
         const savedEmail = String(localStorage.getItem(LS_EMAIL) || '').trim();
         if (isValidEmail(savedEmail)) return savedEmail;
@@ -93,7 +124,7 @@ const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COL
                     to: emailLog.to,
                     subject: emailLog.subject,
                     text: emailLog.body,
-                    html: `<pre style="font-family: Arial, sans-serif; white-space: pre-wrap; line-height: 1.5;">${escapeHtml(emailLog.body)}</pre>`,
+                    html: buildCineBookEmailHtml(emailLog),
                     type: emailLog.type
                 })
             });

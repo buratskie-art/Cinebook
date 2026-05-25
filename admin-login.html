@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Admin Login - CineBook</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-auth-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+        }
+        .admin-auth-form {
+            background: linear-gradient(135deg, #1f1f1f 0%, #2a2a2a 100%);
+            padding: 50px 40px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            border: 1px solid rgba(229, 9, 20, 0.2);
+        }
+        .admin-auth-form h2 {
+            margin-top: 0;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .admin-auth-form .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .admin-form-group {
+            margin-bottom: 24px;
+        }
+        .admin-form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #e50914;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .admin-form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #0a0a0a;
+            color: #fff;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: all 200ms ease;
+        }
+        .admin-form-group input:focus {
+            outline: none;
+            border-color: #e50914;
+            box-shadow: 0 0 12px rgba(229, 9, 20, 0.4);
+            background: #111;
+        }
+        .admin-auth-form button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #e50914 0%, #bf0810 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 200ms ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .admin-auth-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(229, 9, 20, 0.5);
+        }
+        .admin-auth-form button:active {
+            transform: translateY(0);
+        }
+        .admin-error-msg {
+            background: rgba(244, 67, 54, 0.2);
+            border-left: 4px solid #f44336;
+            color: #ff9999;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+        }
+        .admin-success-msg {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4caf50;
+            color: #90ee90;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+        }
+        .admin-info {
+            background: rgba(33, 150, 243, 0.1);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            color: #64b5f6;
+            padding: 14px;
+            border-radius: 6px;
+            margin-top: 24px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .admin-back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #ffeb3b;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .admin-back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-auth-page">
+        <div class="admin-auth-form">
+            <a href="index.html" class="admin-back-link">← Back to Home</a>
+            <h2>🔐 CineBook Admin</h2>
+            <p class="subtitle">Secure Administration Panel</p>
+            
+            <div id="adminErrorMsg" class="admin-error-msg"></div>
+            <div id="adminSuccessMsg" class="admin-success-msg"></div>
+            
+            <div class="admin-form-group">
+                <label for="adminUsername">Admin Username</label>
+                <input type="text" id="adminUsername" placeholder="Enter admin username" autocomplete="username">
+            </div>
+            
+            <div class="admin-form-group">
+                <label for="adminPassword">Admin Password</label>
+                <input type="password" id="adminPassword" placeholder="Enter admin password" autocomplete="current-password">
+            </div>
+            
+            <button onclick="adminLogin()">Login to Admin Panel</button>
+            
+            <div class="admin-info">
+                <strong>Default Admin Credentials (for demo):</strong><br>
+                Username: <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 3px;">admin</code><br>
+                Password: <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 3px;">admin123</code>
+            </div>
+        </div>
+    </div>
+
+    <script src="database.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

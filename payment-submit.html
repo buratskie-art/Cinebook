@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Submit Payment - CineBook</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .payment-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 30px;
+        }
+        .payment-section {
+            background: linear-gradient(135deg, #222 0%, #1a1a1a 100%);
+            border: 1px solid rgba(229, 9, 20, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        .payment-section h2 {
+            color: #e50914;
+            margin-top: 0;
+            border-bottom: 2px solid rgba(229, 9, 20, 0.2);
+            padding-bottom: 15px;
+            font-size: 22px;
+        }
+        .payment-section h3 {
+            color: #fff;
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .booking-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .detail-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-left: 3px solid #e50914;
+            border-radius: 5px;
+        }
+        .detail-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .detail-value {
+            font-size: 18px;
+            color: #fff;
+            font-weight: 600;
+        }
+        .payment-instructions {
+            background: rgba(33, 150, 243, 0.1);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .payment-instructions h3 {
+            margin-top: 0;
+            color: #64b5f6;
+        }
+        .payment-method {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .method-name {
+            color: #81c784;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .method-details {
+            color: #a5d6a7;
+            font-size: 14px;
+        }
+        .timer {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #ff9999;
+        }
+        .timer-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .timer-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ff6b6b;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            color: #e50914;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #e50914;
+            box-shadow: 0 0 8px rgba(229, 9, 20, 0.3);
+        }
+        .form-group textarea {
+            resize: vertical;
+            font-family: inherit;
+            min-height: 100px;
+        }
+        .file-upload-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(229, 9, 20, 0.1) 0%, rgba(229, 9, 20, 0.05) 100%);
+            border: 2px dashed #e50914;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+        .file-upload-label:hover {
+            background: linear-gradient(135deg, rgba(229, 9, 20, 0.15) 0%, rgba(229, 9, 20, 0.1) 100%);
+            border-color: #bf0810;
+        }
+        .file-upload-label i {
+            font-size: 40px;
+            margin-right: 15px;
+        }
+        .file-upload-text h3 {
+            margin: 0 0 5px 0;
+            color: #e50914;
+        }
+        .file-upload-text p {
+            margin: 0;
+            color: #999;
+            font-size: 13px;
+        }
+        #paymentProofFile {
+            display: none;
+        }
+        .file-selected {
+            background: rgba(76, 175, 80, 0.1);
+            border: 2px dashed #4caf50;
+        }
+        .file-selected-info {
+            display: none;
+            padding: 15px;
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 3px solid #4caf50;
+            border-radius: 5px;
+            margin-top: 10px;
+            color: #81c784;
+        }
+        .file-selected-info.show {
+            display: block;
+        }
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+        .btn-submit {
+            flex: 1;
+            padding: 14px;
+            background: linear-gradient(135deg, #e50914 0%, #bf0810 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 200ms ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 14px;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(229, 9, 20, 0.4);
+        }
+        .btn-cancel {
+            flex: 1;
+            padding: 14px;
+            background: #333;
+            color: #ccc;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 200ms ease;
+        }
+        .btn-cancel:hover {
+            background: #444;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert-error {
+            background: rgba(244, 67, 54, 0.2);
+            border-left: 3px solid #f44336;
+            color: #ff9999;
+        }
+        .alert-success {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 3px solid #4caf50;
+            color: #81c784;
+        }
+        .alert-info {
+            background: rgba(33, 150, 243, 0.2);
+            border-left: 3px solid #2196f3;
+            color: #64b5f6;
+        }
+        .no-pending-bookings {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .no-pending-bookings-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #e50914;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <a href="dashboard.html" class="back-link">← Back to Dashboard</a>
+
+        <div id="alertBox" class="alert"></div>
+
+        <div id="noPendingBookings" class="no-pending-bookings" style="display: none;">
+            <div class="no-pending-bookings-icon">🎬</div>
+            <h2>No Pending Payments</h2>
+            <p>You don't have any bookings awaiting payment.</p>
+            <a href="index.html" style="color: #e50914; text-decoration: none; font-weight: 600;">Browse Movies</a>
+        </div>
+
+        <div id="paymentForm" style="display: none;">
+            <!-- Booking Details Section -->
+            <div class="payment-section">
+                <h2>📋 Booking Details</h2>
+                <div class="booking-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Booking ID</div>
+                        <div class="detail-value" id="detailBookingId">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Movie</div>
+                        <div class="detail-value" id="detailMovie">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Seats</div>
+                        <div class="detail-value" id="detailSeats">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Total Amount</div>
+                        <div class="detail-value" id="detailAmount">₱0</div>
+                    </div>
+                </div>
+
+                <!-- Timer -->
+                <div class="timer">
+                    <div class="timer-label">⏱️ Payment Deadline</div>
+                    <div class="timer-value" id="timerValue">--:--:--</div>
+                    <p style="margin: 8px 0 0 0; font-size: 12px;">Complete payment and upload proof before deadline</p>
+                </div>
+            </div>
+
+            <!-- Payment Instructions -->
+            <div class="payment-section">
+                <h2>💳 Payment Instructions</h2>
+                <div class="payment-instructions">
+                    <h3>Steps to Complete Payment:</h3>
+                    <ol style="color: #ddd; line-height: 1.8; margin-left: 20px;">
+                        <li>Send the payment amount to the GCash number below</li>
+                        <li>Wait for payment confirmation from the GCash sender</li>
+                        <li>Note down the transaction reference number</li>
+                        <li>Upload proof of payment (screenshot) on this page</li>
+                        <li>Submit the payment details for verification</li>
+                    </ol>
+                </div>
+
+                <h3>Payment Methods:</h3>
+                <div class="payment-method">
+                    <div class="method-name">💰 GCash Transfer</div>
+                    <div class="method-details">
+                        <strong>GCash Number:</strong> +63 912 345 6789<br>
+                        <strong>Account Name:</strong> CineBook Demo<br>
+                        <strong>Amount:</strong> <span id="methodAmount">₱0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proof of Payment Section -->
+            <div class="payment-section">
+                <h2>📸 Submit Proof of Payment</h2>
+
+                <div class="form-group">
+                    <label for="paymentProofFile">Upload Screenshot / Proof Document</label>
+                    <div class="file-upload-wrapper">
+                        <label for="paymentProofFile" class="file-upload-label">
+                            <div class="file-upload-text">
+                                <h3>📁 Click to upload or drag & drop</h3>
+                                <p>PNG, JPG, PDF (Max 5MB)</p>
+                            </div>
+                        </label>
+                        <input type="file" id="paymentProofFile" accept=".png,.jpg,.jpeg,.pdf" onchange="handleFileSelect()">
+                    </div>
+                    <div id="fileSelectedInfo" class="file-selected-info">
+                        <strong>File selected:</strong> <span id="fileName"></span> (<span id="fileSize"></span>)
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="referenceNumber">GCash Reference Number</label>
+                    <input type="text" id="referenceNumber" placeholder="e.g., 202605051234567" />
+                </div>
+
+                <div class="form-group">
+                    <label for="senderName">Sender Name (from GCash)</label>
+                    <input type="text" id="senderName" placeholder="Your name on GCash account" />
+                </div>
+
+                <div class="form-group">
+                    <label for="additionalNotes">Additional Notes (Optional)</label>
+                    <textarea id="additionalNotes" placeholder="Any additional information about this payment..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-submit" onclick="submitPaymentProof()">Submit Payment Proof</button>
+                    <button class="btn-cancel" onclick="cancelPayment()">Cancel Booking</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="database.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Payment submission logic
+        function loadPendingBooking() {
+            const isLogged = localStorage.getItem('cinebook:loggedIn') === 'true';
+            if (!isLogged) {
+                showAlert('Please login first to submit payment.', 'error');
+                setTimeout(() => location.href = 'login.html', 1000);
+                return;
+            }
+
+            const pendingBookingId = localStorage.getItem('cinebook:pendingBookingId');
+            const reservations = JSON.parse(localStorage.getItem('cinebook:reservations') || '[]');
+            let booking = null;
+
+            if (pendingBookingId) {
+                booking = reservations.find(r => r.id == pendingBookingId && r.status === 'pending');
+            }
+
+            if (!booking) {
+                const currentUser = localStorage.getItem('cinebook:user');
+                booking = reservations.find(r => r.username === currentUser && r.status === 'pending');
+                if (booking) {
+                    localStorage.setItem('cinebook:pendingBookingId', booking.id);
+                }
+            }
+
+            if (!booking) {
+                document.getElementById('noPendingBookings').style.display = 'block';
+                document.getElementById('paymentForm').style.display = 'none';
+                return;
+            }
+
+            // Display booking details
+            document.getElementById('paymentForm').style.display = 'block';
+            document.getElementById('detailBookingId').textContent = '#' + booking.id;
+            document.getElementById('detailMovie').textContent = booking.movie;
+            document.getElementById('detailSeats').textContent = Array.isArray(booking.seats) ? booking.seats.join(', ') : booking.seats;
+            document.getElementById('detailAmount').textContent = '₱' + booking.price;
+            document.getElementById('methodAmount').textContent = '₱' + booking.price;
+
+            // Start countdown timer
+            startPaymentTimer(booking.paymentDeadline || (Date.now() + 30 * 60 * 1000)); // 30 minutes default
+        }
+
+        function startPaymentTimer(deadline) {
+            const updateTimer = () => {
+                const now = Date.now();
+                const remaining = deadline - now;
+
+                if (remaining <= 0) {
+                    document.getElementById('timerValue').textContent = '00:00:00';
+                    showAlert('Payment deadline has expired. Your booking has been cancelled and seats released.', 'error');
+                    setTimeout(() => location.href = 'dashboard.html', 2000);
+                    return;
+                }
+
+                const hours = Math.floor(remaining / (1000 * 60 * 60));
+                const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+                document.getElementById('timerValue').textContent =
+                    String(hours).padStart(2, '0') + ':' +
+                    String(minutes).padStart(2, '0') + ':' +
+                    String(seconds).padStart(2, '0');
+            };
+
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        function handleFileSelect() {
+            const file = document.getElementById('paymentProofFile').files[0];
+            if (file) {
+                const fileInfo = document.getElementById('fileSelectedInfo');
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(2) + ' KB';
+                fileInfo.classList.add('show');
+                document.querySelector('.file-upload-label').classList.add('file-selected');
+            }
+        }
+
+        function submitPaymentProof() {
+            const bookingId = localStorage.getItem('cinebook:pendingBookingId');
+            const file = document.getElementById('paymentProofFile').files[0];
+            const refNum = document.getElementById('referenceNumber').value.trim();
+            const senderName = document.getElementById('senderName').value.trim();
+            const notes = document.getElementById('additionalNotes').value.trim();
+
+            if (!file || !refNum || !senderName) {
+                showAlert('Please upload proof file, reference number, and sender name.', 'error');
+                return;
+            }
+
+            // Read file as data URL for storage
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const paymentSubmission = {
+                    id: Date.now(),
+                    bookingId: parseInt(bookingId),
+                    proofFile: e.target.result,
+                    fileName: file.name,
+                    referenceNumber: refNum,
+                    senderName: senderName,
+                    notes: notes,
+                    submittedAt: new Date().toLocaleString(),
+                    status: 'pending_review'
+                };
+
+                // Store payment submission
+                const submissions = JSON.parse(localStorage.getItem('cinebook:paymentSubmissions') || '[]');
+                submissions.push(paymentSubmission);
+                localStorage.setItem('cinebook:paymentSubmissions', JSON.stringify(submissions));
+
+                // Update booking status to "payment_pending_review"
+                const reservations = JSON.parse(localStorage.getItem('cinebook:reservations') || '[]');
+                const booking = reservations.find(r => r.id == bookingId);
+                if (booking) {
+                    booking.status = 'payment_pending_review';
+                    booking.submissionId = paymentSubmission.id;
+                }
+                localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
+
+                showAlert('✓ Payment proof submitted successfully! Admin will review within 24 hours.', 'success');
+                localStorage.removeItem('cinebook:pendingBookingId');
+                setTimeout(() => location.href = 'dashboard.html', 2000);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelPayment() {
+            if (confirm('Are you sure you want to cancel this booking? Your reserved seats will be released.')) {
+                const bookingId = localStorage.getItem('cinebook:pendingBookingId');
+                let reservations = JSON.parse(localStorage.getItem('cinebook:reservations') || '[]');
+                reservations = reservations.filter(r => r.id != bookingId);
+                localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
+
+                localStorage.removeItem('cinebook:pendingBookingId');
+                showAlert('Booking cancelled successfully.', 'info');
+                setTimeout(() => location.href = 'dashboard.html', 1500);
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = 'alert alert-' + type;
+            alertBox.style.display = 'block';
+        }
+
+        // Load pending booking on page load
+        document.addEventListener('DOMContentLoaded', loadPendingBooking);
+    </script>
+</body>
+</html>

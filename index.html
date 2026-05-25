@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>CineBook</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="curtain-rod"></div>
+
+    <div class="curtain-left">
+      <svg viewBox="0 0 280 900" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="clL" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#8b0000"/>
+            <stop offset="60%" style="stop-color:#cc0000"/>
+            <stop offset="100%" style="stop-color:#a00000"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,0 L280,0 Q200,80 140,220 Q100,340 110,900 L0,900 Z" fill="url(#clL)"/>
+        <path d="M60,0 Q40,120 55,300 Q65,500 70,900 L50,900 Q45,500 35,300 Q20,120 40,0 Z" fill="rgba(0,0,0,0.15)"/>
+        <path d="M20,0 Q10,100 18,280 Q24,460 26,900 L10,900 Q8,460 2,280 Q-4,100 5,0 Z" fill="rgba(0,0,0,0.1)"/>
+        <path d="M90,0 Q75,100 80,260 Q85,440 88,900 L95,900 Q92,440 87,260 Q82,100 97,0 Z" fill="rgba(255,255,255,0.07)"/>
+        <ellipse cx="108" cy="310" rx="18" ry="8" fill="#daa520" opacity="0.9"/>
+        <ellipse cx="108" cy="310" rx="12" ry="5" fill="#ffd700" opacity="0.7"/>
+      </svg>
+    </div>
+
+    <div class="curtain-right">
+      <svg viewBox="0 0 280 900" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="clR" x1="100%" y1="0%" x2="0%" y2="0%">
+            <stop offset="0%" style="stop-color:#8b0000"/>
+            <stop offset="60%" style="stop-color:#cc0000"/>
+            <stop offset="100%" style="stop-color:#a00000"/>
+          </linearGradient>
+        </defs>
+        <path d="M280,0 L0,0 Q80,80 140,220 Q180,340 170,900 L280,900 Z" fill="url(#clR)"/>
+        <path d="M220,0 Q240,120 225,300 Q215,500 210,900 L230,900 Q235,500 245,300 Q260,120 240,0 Z" fill="rgba(0,0,0,0.15)"/>
+        <path d="M260,0 Q270,100 262,280 Q256,460 254,900 L270,900 Q272,460 278,280 Q284,100 275,0 Z" fill="rgba(0,0,0,0.1)"/>
+        <path d="M190,0 Q205,100 200,260 Q195,440 192,900 L185,900 Q188,440 193,260 Q198,100 183,0 Z" fill="rgba(255,255,255,0.07)"/>
+        <ellipse cx="172" cy="310" rx="18" ry="8" fill="#daa520" opacity="0.9"/>
+        <ellipse cx="172" cy="310" rx="12" ry="5" fill="#ffd700" opacity="0.7"/>
+      </svg>
+    </div>
+
+    <header>
+        <h1>CineBook</h1>
+
+        <div class="header-controls">
+            <input type="text" id="search" placeholder="Search movies..." onkeyup="searchMovie()">
+
+            <select id="genreFilter" onchange="filterGenre()">
+                <option value="All">All Genres</option>
+            </select>
+
+            <div class="auth-buttons">
+                <button id="loginBtn" onclick="showLoginPopover(this)">Login</button>
+                <button id="registerBtn" onclick="window.location.href='register.html'">Register</button>
+                <button id="dashboardBtn" onclick="window.location.href='dashboard.html'" style="display:none;">Dashboard</button>
+                <button id="logoutBtn" onclick="logoutUser()" style="display:none;">Logout</button>
+                <button id="adminBtn" onclick="window.location.href='admin-login.html'" style="background: linear-gradient(135deg, #8b0000 0%, #660000 100%); border: 1px solid rgba(229, 9, 20, 0.5);">Admin</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- FEATURED -->
+    <section class="featured">
+        <img id="slide" src="movie1.jpg">
+    </section>
+
+    <!-- MOVIES -->
+    <section id="movieList" class="movies"></section>
+
+    <footer>
+        <p>&copy; 2026 CineBook. All rights reserved. | <a href="privacy.html">Privacy</a> | <a href="terms.html">Terms</a> | <a href="contact.html">Contact</a></p>
+    </footer>
+
+    <script src="database.js"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>

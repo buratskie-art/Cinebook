@@ -31,6 +31,15 @@
         }
     }
 
+    function collectLocalStorageDump() {
+        const dump = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            dump[key] = nativeGetItem.call(localStorage, key);
+        }
+        return dump;
+    }
+
     function collectLocalState() {
         return {
             movies: parseJson('cinebook:admin:movies', window.CineBookSeedData?.movies || []),
@@ -48,12 +57,14 @@
             preferences: {
                 emailNotif: nativeGetItem.call(localStorage, 'cinebook:emailNotif') || '',
                 promoNotif: nativeGetItem.call(localStorage, 'cinebook:promoNotif') || ''
-            }
+            },
+            localStorage: collectLocalStorageDump()
         };
     }
 
     function hasMeaningfulLocalData() {
-        return Array.from(CINEBOOK_KEYS).some((key) => {
+        return Object.keys(collectLocalStorageDump()).some((key) => {
+            if (!key.startsWith('cinebook:') && key !== 'movie') return false;
             const raw = nativeGetItem.call(localStorage, key);
             if (!raw) return false;
 
@@ -91,6 +102,14 @@
                 if (next.preferences.emailNotif !== undefined) nativeSetItem.call(localStorage, 'cinebook:emailNotif', next.preferences.emailNotif);
                 if (next.preferences.promoNotif !== undefined) nativeSetItem.call(localStorage, 'cinebook:promoNotif', next.preferences.promoNotif);
             }
+
+            if (next.localStorage && typeof next.localStorage === 'object') {
+                Object.entries(next.localStorage).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null) {
+                        nativeSetItem.call(localStorage, key, String(value));
+                    }
+                });
+            }
         } finally {
             applyingRemoteState = false;
         }
@@ -123,12 +142,12 @@
 
     Storage.prototype.setItem = function (key, value) {
         nativeSetItem.call(this, key, value);
-        if (this === localStorage && CINEBOOK_KEYS.has(key)) scheduleSync(`set:${key}`);
+        if (this === localStorage && (key.startsWith('cinebook:') || key === 'movie' || CINEBOOK_KEYS.has(key))) scheduleSync(`set:${key}`);
     };
 
     Storage.prototype.removeItem = function (key) {
         nativeRemoveItem.call(this, key);
-        if (this === localStorage && CINEBOOK_KEYS.has(key)) scheduleSync(`remove:${key}`);
+        if (this === localStorage && (key.startsWith('cinebook:') || key === 'movie' || CINEBOOK_KEYS.has(key))) scheduleSync(`remove:${key}`);
     };
 
     const ready = fetch(API_URL)

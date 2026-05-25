@@ -43,7 +43,8 @@ function normalizeState(input = {}) {
     paymentSubmissions: Array.isArray(input.paymentSubmissions) ? input.paymentSubmissions : [],
     emailLog: Array.isArray(input.emailLog) ? input.emailLog : [],
     users: input.users && typeof input.users === 'object' ? input.users : {},
-    preferences: input.preferences && typeof input.preferences === 'object' ? input.preferences : {}
+    preferences: input.preferences && typeof input.preferences === 'object' ? input.preferences : {},
+    localStorage: input.localStorage && typeof input.localStorage === 'object' ? input.localStorage : {}
   };
 }
 

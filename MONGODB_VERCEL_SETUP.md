@@ -31,7 +31,9 @@ After deployment:
 3. Go to **Settings**.
 4. Click **Sync to MongoDB**.
 
-That button overwrites the CineBook document in MongoDB with the current browser data: movies, theaters, showtimes, reservations, payments, payment submissions, email logs, user info, and preferences.
+That button overwrites the CineBook document in MongoDB with the current browser data: movies, theaters, showtimes, reservations, payments, payment submissions, email logs, user info, preferences, and a full `state.localStorage` dump.
+
+If your needed data exists in a different browser origin, open `local-storage-migration.html` in that same browser, set the API URL to your deployed `/api/state`, and click **Move Local Storage to MongoDB**.
 
 ## Notes
 

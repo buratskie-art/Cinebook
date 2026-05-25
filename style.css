@@ -2225,7 +2225,7 @@ header {
 body:has(.curtain-valance) {
     background:
         linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.78)),
-        url("assets/theatre-curtain-bg.png?v=full-red-curtain") center top / cover no-repeat fixed,
+        url("assets/theatre-curtain-bg.png?v=full-red-curtain-2") center top / cover no-repeat fixed,
         #050303 !important;
 }
 

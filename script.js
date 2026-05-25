@@ -955,7 +955,11 @@ CineBook Admin
     }
 
     // Initialization on DOM ready
-    function init() {
+    async function init() {
+        if (window.CineBookDataSync) {
+            await window.CineBookDataSync.ready;
+        }
+
         // Seed sample theaters and showtimes for demo mode
         seedDefaultAdminTheatersAndShowtimes();
         
@@ -1017,9 +1021,11 @@ CineBook Admin
 
     // Run initialization after DOM ready
     if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', init);
+        window.addEventListener('DOMContentLoaded', () => {
+            init().catch(error => console.error('CineBook init failed:', error));
+        });
     } else {
-        init();
+        init().catch(error => console.error('CineBook init failed:', error));
     }
 
     // Return public API for backward compatibility and testing
@@ -2125,6 +2131,24 @@ function saveSettings() {
     alert('✓ Settings saved successfully! (Demo mode - settings not persisted)');
 }
 
+async function syncLocalDataToMongo() {
+    if (!window.CineBookDataSync) {
+        alert('MongoDB sync is not loaded on this page.');
+        return;
+    }
+
+    if (!confirm('This will overwrite the CineBook data currently stored in MongoDB with the data in this browser. Continue?')) {
+        return;
+    }
+
+    try {
+        await window.CineBookDataSync.overwriteMongoFromLocal();
+        alert('MongoDB data was overwritten with your local CineBook data.');
+    } catch (error) {
+        alert('MongoDB sync failed: ' + error.message);
+    }
+}
+
 function exportData() {
     const data = {
         movies: getAdminMovies(),
@@ -2191,6 +2215,7 @@ window.loadAdminDashboardStats = loadAdminDashboardStats;
 window.initAdminDashboard = initAdminDashboard;
 window.switchAdminTab = switchAdminTab;
 window.saveSettings = saveSettings;
+window.syncLocalDataToMongo = syncLocalDataToMongo;
 window.exportData = exportData;
 window.resetData = resetData;
 window.reviewPaymentSubmission = reviewPaymentSubmission;

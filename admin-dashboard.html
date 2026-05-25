@@ -624,6 +624,7 @@
                     <p style="color: #999; margin-bottom: 15px;">Export or reset system data</p>
                     <div class="admin-form-actions">
                         <button class="admin-btn" onclick="exportData()">Export Data</button>
+                        <button class="admin-btn" onclick="syncLocalDataToMongo()">Sync to MongoDB</button>
                         <button class="admin-btn admin-btn-danger" onclick="resetData()">Reset All Data</button>
                     </div>
                 </div>
@@ -632,10 +633,14 @@
     </div>
 
     <script src="database.js"></script>
+    <script src="cinebook-data-sync.js"></script>
     <script src="script.js"></script>
     <script>
         // Initialize admin dashboard on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (window.CineBookDataSync) {
+                await window.CineBookDataSync.ready;
+            }
             if (!checkAdminSession()) {
                 location.href = 'admin-login.html';
                 return;

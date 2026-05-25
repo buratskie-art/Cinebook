@@ -421,10 +421,14 @@
     </div>
 
     <script src="database.js"></script>
+    <script src="cinebook-data-sync.js"></script>
     <script src="script.js"></script>
     <script>
         // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (window.CineBookDataSync) {
+                await window.CineBookDataSync.ready;
+            }
             if (typeof initDashboard === 'function') {
                 initDashboard();
             }

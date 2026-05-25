@@ -382,6 +382,7 @@
     </div>
 
     <script src="database.js"></script>
+    <script src="cinebook-data-sync.js"></script>
     <script src="script.js"></script>
     <script>
         // Payment submission logic
@@ -533,7 +534,12 @@
         }
 
         // Load pending booking on page load
-        document.addEventListener('DOMContentLoaded', loadPendingBooking);
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (window.CineBookDataSync) {
+                await window.CineBookDataSync.ready;
+            }
+            loadPendingBooking();
+        });
     </script>
 </body>
 </html>

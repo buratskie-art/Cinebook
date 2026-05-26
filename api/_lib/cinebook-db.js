@@ -39,6 +39,7 @@ function getClient() {
     throw new Error('Missing MONGODB_URI environment variable.');
   }
 
+  // Reuse the MongoDB connection across serverless function calls.
   if (!clientPromise) {
     const client = new MongoClient(MONGODB_URI);
     clientPromise = client.connect();

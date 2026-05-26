@@ -81,8 +81,6 @@ https://your-site.vercel.app/api/init-db
 
 The old compiled `app_state` collection is only used for one-time migration. When the API sees legacy `app_state` data, it moves that data into the organized collections and removes the legacy collection.
 
-If your needed data exists in a different browser origin, open `local-storage-migration.html` in that same browser, set the API URL to your deployed `/api/state`, and click **Move Local Storage to MongoDB**.
-
 ## Notes
 
 - The app still uses `localStorage` as a fast browser cache.

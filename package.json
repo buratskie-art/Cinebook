@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "vercel dev",
-    "start": "vercel dev"
+    "start": "vercel dev",
+    "check": "node --check script.js && node --check cinebook-data-sync.js && node --check database.js && node --check api/state.js && node --check api/data.js && node --check api/email/index.js && node --check api/init-db/index.js && node --check api/_lib/cinebook-db.js && node --check api/_lib/http.js && node --check api/_lib/resource-handler.js"
   },
   "dependencies": {
     "mongodb": "^6.16.0",

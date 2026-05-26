@@ -9,8 +9,9 @@ A secure, self-contained admin panel has been implemented for CineBook, allowing
 
 ### Access the Admin Panel
 1. Navigate to the main CineBook homepage
-2. Click the **"Admin"** button in the header (dark red button)
-3. You'll be redirected to `admin-login.html`
+2. Click **Login**
+3. Enter the admin credentials in the normal CineBook login form
+4. The system will redirect the admin account to `admin-dashboard.html`
 
 ### Default Credentials (Demo)
 - **Username:** `admin`

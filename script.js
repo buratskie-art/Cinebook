@@ -1,5 +1,3 @@
-// Restored simple script (pre-effects). Handles movie list, movie details, seats, login/register and slider.
-
 const ADMIN_SHOWTIME_SLOTS = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
 
 const CineBook = (() => {
@@ -168,7 +166,6 @@ let lastEmailError = '';
                 error: lastEmailError,
                 failedAt: new Date().toLocaleString()
             });
-            console.error('CineBook email failed:', error);
             return false;
         }
     }
@@ -412,11 +409,7 @@ let lastEmailError = '';
                 // Load showtimes for this movie
                 loadShowtimesForMovie(selected.title || movieTitle);
                 return;
-            } else {
-                console.warn(`Movie "${movieTitle}" not found.`);
             }
-        } else {
-            console.warn('movies undefined when rendering details.');
         }
 
         if (titleEl) titleEl.textContent = movieTitle;
@@ -920,7 +913,12 @@ CineBook Admin
         if (!userEl || !passEl) return;
         const user = userEl.value;
         const pass = passEl.value;
-        if (user === localStorage.getItem(LS_USER) &&
+
+        if (isDefaultAdminCredential(user, pass)) {
+            startAdminSession(user);
+            alert("Admin login success!");
+            location.href = "admin-dashboard.html";
+        } else if (user === localStorage.getItem(LS_USER) &&
             pass === localStorage.getItem(LS_PASS) &&
             localStorage.getItem(LS_EMAIL_VERIFIED) === 'true') {
             localStorage.setItem(LS_LOGGED, "true");
@@ -1460,7 +1458,7 @@ CineBook Admin
             await window.CineBookDataSync.ready;
         }
 
-        // Seed sample theaters and showtimes for demo mode
+        // Ensures the booking flow has theater and showtime records on first run.
         seedDefaultAdminTheatersAndShowtimes();
         
         // Update user menu
@@ -1566,13 +1564,13 @@ CineBook Admin
     // Run initialization after DOM ready
     if (document.readyState === 'loading') {
         window.addEventListener('DOMContentLoaded', () => {
-            init().catch(error => console.error('CineBook init failed:', error));
+            init().catch(() => {});
         });
     } else {
-        init().catch(error => console.error('CineBook init failed:', error));
+        init().catch(() => {});
     }
 
-    // Return public API for backward compatibility and testing
+    // Expose only the functions used by inline HTML event handlers.
     return {
         openMovie,
         register,
@@ -1661,13 +1659,13 @@ function getRecipientEmail(username) {
     return user.includes('@') ? user : `${user}@student.edu`;
 }
 
-// Default admin credentials (should be hashed in production)
+// Default admin credentials for classroom/local deployment.
 const DEFAULT_ADMIN = {
     username: 'admin',
     password: 'admin123'
 };
 
-// Simple password hashing for demo (NOT for production)
+// Lightweight classroom-only hash used before storing admin passwords locally.
 function simpleHash(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -1676,6 +1674,18 @@ function simpleHash(str) {
         hash = hash & hash;
     }
     return 'hash_' + Math.abs(hash).toString(36);
+}
+
+function isDefaultAdminCredential(username, password) {
+    return username === DEFAULT_ADMIN.username && password === DEFAULT_ADMIN.password;
+}
+
+function startAdminSession(username) {
+    localStorage.setItem(ADMIN_LS_LOGGED, 'true');
+    localStorage.setItem(ADMIN_LS_SESSION, JSON.stringify({
+        username,
+        loginTime: new Date().toISOString()
+    }));
 }
 
 function adminLogin() {
@@ -1691,12 +1701,8 @@ function adminLogin() {
         return;
     }
     
-    if (username === DEFAULT_ADMIN.username && password === DEFAULT_ADMIN.password) {
-        localStorage.setItem(ADMIN_LS_LOGGED, 'true');
-        localStorage.setItem(ADMIN_LS_SESSION, JSON.stringify({
-            username: username,
-            loginTime: new Date().toISOString()
-        }));
+    if (isDefaultAdminCredential(username, password)) {
+        startAdminSession(username);
         successMsg.textContent = 'Login successful. Redirecting...';
         successMsg.style.display = 'block';
         errorMsg.style.display = 'none';
@@ -1712,7 +1718,6 @@ function adminLogin() {
 
 function checkAdminSession() {
     const isLogged = localStorage.getItem(ADMIN_LS_LOGGED) === 'true';
-    console.log('checkAdminSession:', { isLogged, loggedValue: localStorage.getItem(ADMIN_LS_LOGGED) });
     if (!isLogged) {
         return false;
     }
@@ -1756,8 +1761,8 @@ function getAdminMovies() {
 function saveAdminMovies(movieList) {
     try {
         localStorage.setItem(ADMIN_LS_MOVIES, JSON.stringify(movieList));
-    } catch (e) {
-        console.error('Error saving movies:', e);
+    } catch {
+        alert('Unable to save movies in this browser.');
     }
 }
 
@@ -1940,8 +1945,8 @@ function getAdminTheaters() {
 function saveAdminTheaters(theaterList) {
     try {
         localStorage.setItem(ADMIN_LS_THEATERS, JSON.stringify(theaterList));
-    } catch (e) {
-        console.error('Error saving theaters:', e);
+    } catch {
+        alert('Unable to save theaters in this browser.');
     }
 }
 
@@ -2035,18 +2040,16 @@ function getAdminShowtimes() {
 function saveAdminShowtimes(showtimeList) {
     try {
         localStorage.setItem(ADMIN_LS_SHOWTIMES, JSON.stringify(showtimeList));
-    } catch (e) {
-        console.error('Error saving showtimes:', e);
+    } catch {
+        alert('Unable to save showtimes in this browser.');
     }
 }
 
 function populateShowtimeDropdowns() {
-    console.log('populateShowtimeDropdowns called');
     const movieSelect = document.getElementById('showtimeMovie');
     const theaterSelect = document.getElementById('showtimeTheater');
     const timeSelect = document.getElementById('showtimeTime');
     if (!movieSelect || !theaterSelect) {
-        console.log('Dropdown elements not found:', { movieSelect: !!movieSelect, theaterSelect: !!theaterSelect, timeSelect: !!timeSelect });
         return;
     }
 
@@ -2055,13 +2058,6 @@ function populateShowtimeDropdowns() {
     const selectedMovieId = movieSelect.value;
     const selectedTheaterId = theaterSelect.value;
     const selectedTime = timeSelect ? timeSelect.value : '';
-
-    console.log('Populating with data:', {
-        movies: allMovies.length,
-        theaters: allTheaters.length,
-        movieIds: allMovies.map(m => m.id),
-        theaterIds: allTheaters.map(t => t.id)
-    });
 
     movieSelect.innerHTML = '<option value="">Select a movie</option>' +
         allMovies.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
@@ -2083,7 +2079,6 @@ function populateShowtimeDropdowns() {
         if (selectedTime && ADMIN_SHOWTIME_SLOTS.includes(selectedTime)) {
             timeSelect.value = selectedTime;
         }
-        console.log('Time slots populated:', ADMIN_SHOWTIME_SLOTS);
     }
 
     [movieSelect, theaterSelect, document.getElementById('showtimeDate')].forEach((field) => {
@@ -2168,26 +2163,16 @@ function refreshShowtimeTimeOptions(existingShowtimes) {
 }
 
 function addShowtime() {
-    console.log('addShowtime called');
     const movieSelect = document.getElementById('showtimeMovie');
     const theaterSelect = document.getElementById('showtimeTheater');
     const timeSelect = document.getElementById('showtimeTime');
-
-    console.log('Elements found:', { movieSelect, theaterSelect, timeSelect });
 
     if (!movieSelect || !theaterSelect || !timeSelect) {
         alert('Showtime form is not ready. Please refresh the page.');
         return;
     }
 
-    console.log('Options count:', {
-        movies: movieSelect.options.length,
-        theaters: theaterSelect.options.length,
-        times: timeSelect.options.length
-    });
-
     if (movieSelect.options.length <= 1 || theaterSelect.options.length <= 1 || timeSelect.options.length <= 1) {
-        console.log('Populating dropdowns...');
         populateShowtimeDropdowns();
     }
 
@@ -2195,8 +2180,6 @@ function addShowtime() {
     const theaterId = theaterSelect.value;
     const date = document.getElementById('showtimeDate').value;
     const time = timeSelect.value;
-
-    console.log('Form values:', { movieId, theaterId, date, time });
 
     if (!movieId || !theaterId || !date || !time) {
         alert('Please fill in all showtime fields.');
@@ -2209,12 +2192,9 @@ function addShowtime() {
 
     const allMovies = getAdminMovies();
     const allTheaters = getAdminTheaters();
-    console.log('Available data:', { allMovies: allMovies.length, allTheaters: allTheaters.length });
 
     const movie = allMovies.find(m => m.id === movieId || String(m.id) === String(movieId));
     const theater = allTheaters.find(t => String(t.id) === String(theaterId));
-
-    console.log('Found entities:', { movie, theater });
 
     if (!movie || !theater) {
         alert('Selected movie or theater not found.');
@@ -2230,8 +2210,6 @@ function addShowtime() {
         date,
         time
     };
-
-    console.log('New showtime:', newShowtime);
 
     const allShowtimes = getAdminShowtimes();
     allShowtimes.push(newShowtime);
@@ -2811,7 +2789,6 @@ function loadAdminDashboardStats() {
 }
 
 function initAdminDashboard() {
-    console.log('initAdminDashboard called');
     seedDefaultAdminTheatersAndShowtimes();
     populateShowtimeDropdowns();
     loadAdminDashboardStats();
@@ -2845,12 +2822,10 @@ function closeReviewModal() {
 // Ensure showtime dropdowns are available even before switching tabs
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(() => {
-        console.log('Initial populateShowtimeDropdowns call');
         populateShowtimeDropdowns();
     }, 0);
 } else {
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOMContentLoaded populateShowtimeDropdowns call');
         setTimeout(populateShowtimeDropdowns, 0);
     });
 }
@@ -2960,8 +2935,6 @@ window.closeProofModal = closeProofModal;
 window.viewRejectionReason = viewRejectionReason;
 window.viewEmailContent = viewEmailContent;
 window.closeEmailModal = closeEmailModal;
-window.reviewPaymentSubmission = reviewPaymentSubmission;
-window.approvePaymentSubmission = approvePaymentSubmission;
 
 // Initialize admin dashboard stats on page load if on admin dashboard
 function switchAdminTab(tabName) {

@@ -2,6 +2,18 @@
 
 CineBook is a static movie booking site with Vercel serverless API routes for MongoDB data storage and Resend email delivery.
 
+## Main Features
+
+- Featured movie homepage with search and genre filtering
+- User registration with email OTP verification
+- Login, logout, and user dashboard
+- Movie details, theater selection, showtime selection, and interactive seat booking
+- Reservation details and payment proof submission
+- Admin dashboard for movies, theaters, showtimes, bookings, payment reviews, and email logs
+- MongoDB data synchronization
+- Resend email integration
+- Responsive layout for desktop and mobile
+
 ## Requirements
 
 - Node.js 18 or newer
@@ -37,6 +49,28 @@ RESEND_FROM_EMAIL=...
 
 ```bash
 npm run dev
+```
+
+5. Check the JavaScript files for syntax errors:
+
+```bash
+npm run check
+```
+
+## Project Structure
+
+```text
+api/                  Vercel serverless API routes
+api/_lib/             Shared API/database helpers
+assets/               Website image assets
+*.html                Website pages
+script.js             Main client-side and admin logic
+style.css             Main styling
+database.js           Seed data placeholder
+cinebook-data-sync.js LocalStorage and MongoDB synchronization
+vercel.json           Vercel route rewrites
+.env.example          Placeholder environment variables
+SUBMISSION_NOTES.md   Summary prepared for project submission
 ```
 
 ## Vercel Environment Variables

@@ -2564,10 +2564,10 @@ header {
     }
 }
 
-/* Final homepage spacing: keep the banner flush under the navigation. */
+/* Final homepage spacing: keep a small gap between the navigation and banner. */
 body:has(.featured) header {
     margin-top: 0 !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 14px !important;
 }
 
 body:has(.featured) .featured {
@@ -2575,7 +2575,7 @@ body:has(.featured) .featured {
 }
 
 header + .featured {
-    margin-top: 0 !important;
+    margin-top: 14px !important;
 }
 
 body:has(.featured) .featured img {

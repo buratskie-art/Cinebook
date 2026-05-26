@@ -140,9 +140,7 @@
         if (applyingRemoteState) return;
         clearTimeout(syncTimer);
         syncTimer = setTimeout(() => {
-            pushState(source).catch((error) => {
-                console.warn('CineBook MongoDB sync failed:', error.message);
-            });
+            pushState(source).catch(() => {});
         }, 300);
     }
 
@@ -178,9 +176,7 @@
                 return pushState('initial-seed');
             }
         })
-        .catch((error) => {
-            console.warn('CineBook is using browser storage until MongoDB is reachable:', error.message);
-        });
+        .catch(() => {});
 
     window.CineBookDataSync = {
         ready,

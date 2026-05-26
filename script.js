@@ -184,6 +184,11 @@ let lastEmailError = '';
         return getDefaultMovies();
     }
 
+    function getPosterSource(movie) {
+        const poster = String((movie && movie.poster) || '').trim();
+        return poster || PLACEHOLDER_POSTER;
+    }
+
     function toFileName(title) {
         return (title || '').toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
@@ -397,7 +402,7 @@ let lastEmailError = '';
                 if (synopsisEl) synopsisEl.textContent = selected.synopsis || '';
 
                 if (posterEl) {
-                    posterEl.src = selected.poster || PLACEHOLDER_POSTER;
+                    posterEl.src = getPosterSource(selected);
                     posterEl.onerror = function () {
                         posterEl.onerror = null;
                         posterEl.src = PLACEHOLDER_POSTER;
@@ -707,7 +712,7 @@ let lastEmailError = '';
 
             const posterImg = document.createElement('img');
             posterImg.className = 'movie-image';
-            posterImg.src = m.poster || PLACEHOLDER_POSTER;
+            posterImg.src = getPosterSource(m);
             posterImg.alt = `${m.title} poster`;
             posterImg.onerror = function () {
                 posterImg.onerror = null;
@@ -1851,6 +1856,21 @@ async function syncAdminData(source) {
     }
 }
 
+function validatePosterSource(source) {
+    return new Promise((resolve) => {
+        const poster = String(source || '').trim();
+        if (!poster) {
+            resolve('');
+            return;
+        }
+
+        const image = new Image();
+        image.onload = () => resolve(poster);
+        image.onerror = () => resolve('');
+        image.src = poster;
+    });
+}
+
 function compressPosterFile(file) {
     return new Promise((resolve, reject) => {
         if (!file) {
@@ -1864,15 +1884,15 @@ function compressPosterFile(file) {
             const image = new Image();
             image.onerror = () => reject(new Error('Unable to process poster image.'));
             image.onload = () => {
-                const maxWidth = 900;
-                const maxHeight = 1350;
+                const maxWidth = 520;
+                const maxHeight = 780;
                 const scale = Math.min(1, maxWidth / image.width, maxHeight / image.height);
                 const canvas = document.createElement('canvas');
                 canvas.width = Math.max(1, Math.round(image.width * scale));
                 canvas.height = Math.max(1, Math.round(image.height * scale));
                 const context = canvas.getContext('2d');
                 context.drawImage(image, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL('image/jpeg', 0.82));
+                resolve(canvas.toDataURL('image/jpeg', 0.76));
             };
             image.src = reader.result;
         };
@@ -1903,7 +1923,11 @@ async function addMovie() {
         alert(error.message);
         return;
     }
-    const poster = uploadedPoster || posterUrl;
+    const poster = uploadedPoster || await validatePosterSource(posterUrl);
+    if (posterUrl && !poster) {
+        alert('The poster URL could not be loaded as an image. Use a direct image link ending in .jpg, .png, or upload a poster file.');
+        return;
+    }
 
     if (window.editingMovieId) {
         const movieIndex = allMovies.findIndex(m => m.id === window.editingMovieId);

@@ -106,7 +106,14 @@ let lastEmailError = '';
         if (isValidEmail(savedEmail)) return savedEmail;
         const user = String(username || localStorage.getItem(LS_USER) || '').trim();
         if (!user) return '';
-        return user.includes('@') ? user : `${user}@student.edu`;
+        return user.includes('@') ? user : '';
+    }
+
+    function getBookingRecipientEmail(booking) {
+        const bookingEmail = String((booking && booking.email) || '').trim();
+        if (isValidEmail(bookingEmail)) return bookingEmail;
+        const username = String((booking && booking.username) || '').trim();
+        return isValidEmail(username) ? username : '';
     }
 
     function updateEmailLogStatus(emailId, updates) {
@@ -1165,7 +1172,7 @@ CineBook Admin
     }
 
     async function sendEmailNotification(booking) {
-        const recipient = booking.email || getUserEmail(booking.username);
+        const recipient = getBookingRecipientEmail(booking) || getUserEmail(booking.username);
         if (!recipient) return false;
 
         return sendCineBookEmail({
@@ -1198,7 +1205,7 @@ CineBook Admin
     }
 
     async function sendPaymentSubmittedEmail(booking, submission) {
-        const recipient = booking.email || getUserEmail(booking.username);
+        const recipient = getBookingRecipientEmail(booking) || getUserEmail(booking.username);
         if (!recipient) return false;
 
         return sendCineBookEmail({
@@ -1792,14 +1799,15 @@ function getRecipientEmail(usernameOrBooking) {
     if (usernameOrBooking && typeof usernameOrBooking === 'object') {
         const bookingEmail = String(usernameOrBooking.email || '').trim();
         if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(bookingEmail)) return bookingEmail;
-        usernameOrBooking = usernameOrBooking.username;
+        const bookingUsername = String(usernameOrBooking.username || '').trim();
+        return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(bookingUsername) ? bookingUsername : '';
     }
 
     const savedEmail = String(localStorage.getItem('cinebook:email') || '').trim();
     if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(savedEmail)) return savedEmail;
     const user = String(usernameOrBooking || '').trim();
     if (!user) return '';
-    return user.includes('@') ? user : `${user}@student.edu`;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(user) ? user : '';
 }
 
 // Default admin credentials for classroom/local deployment.

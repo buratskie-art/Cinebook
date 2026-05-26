@@ -504,6 +504,9 @@
                 if (booking) {
                     booking.status = 'payment_pending_review';
                     booking.submissionId = paymentSubmission.id;
+                    if (!booking.email) {
+                        booking.email = localStorage.getItem('cinebook:email') || '';
+                    }
                     if (window.sendPaymentSubmittedEmail) {
                         await window.sendPaymentSubmittedEmail(booking, paymentSubmission);
                     }

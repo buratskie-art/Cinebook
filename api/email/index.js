@@ -7,6 +7,15 @@ function stripTags(value) {
   return String(value || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+function emailError(message, detail) {
+  return {
+    ok: false,
+    error: message,
+    detail,
+    hint: 'Check RESEND_API_KEY and RESEND_FROM_EMAIL in Vercel. If you use onboarding@resend.dev, Resend may only allow sending to the verified account email. For other recipients, verify your own sending domain in Resend.'
+  };
+}
+
 module.exports = async function handler(req, res) {
   setCors(res);
   if (handleOptions(req, res)) return;
@@ -18,7 +27,7 @@ module.exports = async function handler(req, res) {
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    send(res, 500, { ok: false, error: 'RESEND_API_KEY is not configured' });
+    send(res, 500, emailError('RESEND_API_KEY is not configured'));
     return;
   }
 
@@ -44,7 +53,7 @@ module.exports = async function handler(req, res) {
     });
 
     if (result.error) {
-      send(res, 502, { ok: false, error: result.error.message || 'Resend failed' });
+      send(res, 502, emailError(result.error.message || 'Resend failed', result.error));
       return;
     }
 
@@ -53,6 +62,6 @@ module.exports = async function handler(req, res) {
       id: result.data && result.data.id ? result.data.id : result.id
     });
   } catch (error) {
-    send(res, 500, { ok: false, error: error.message || 'Email failed' });
+    send(res, 500, emailError(error.message || 'Email failed'));
   }
 };

@@ -119,6 +119,14 @@ let lastEmailError = '';
         localStorage.setItem('cinebook:emailLog', JSON.stringify(emails));
     }
 
+    function makeEmailError(response, payload, rawText) {
+        if (payload && payload.error) return payload.hint ? `${payload.error} ${payload.hint}` : payload.error;
+        if (rawText) return rawText.slice(0, 180);
+        if (response.status === 404) return 'The deployed /api/email route was not found. Redeploy the Vercel project.';
+        if (response.status === 500) return 'The deployed email service is missing or rejecting its Vercel environment variables.';
+        return `Email service failed with HTTP ${response.status}`;
+    }
+
     async function sendCineBookEmail(emailLog) {
         lastEmailError = '';
         const emails = JSON.parse(localStorage.getItem('cinebook:emailLog') || '[]');
@@ -137,9 +145,15 @@ let lastEmailError = '';
                     type: emailLog.type
                 })
             });
-            const result = await response.json().catch(() => ({}));
+            const rawText = await response.text();
+            let result = {};
+            try {
+                result = rawText ? JSON.parse(rawText) : {};
+            } catch {
+                result = {};
+            }
             if (!response.ok || !result.ok) {
-                throw new Error(result.error || 'Email service failed');
+                throw new Error(makeEmailError(response, result, rawText));
             }
             updateEmailLogStatus(emailLog.id, {
                 status: 'sent',
@@ -1169,13 +1183,37 @@ CineBook Admin
     }
 
     function formatReservationSeats(res) {
-        if (Array.isArray(res.seats)) return res.seats.join(', ');
-        return String(res.seats || 'No seats recorded');
+        if (Array.isArray(res.seats)) return res.seats.length ? res.seats.map(normalizeSeatId).join(', ') : 'No seats recorded';
+        if (typeof res.seats === 'string') {
+            const raw = res.seats.trim();
+            if (!raw) return 'No seats recorded';
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed.length ? parsed.map(normalizeSeatId).join(', ') : 'No seats recorded';
+            } catch {
+                // Keep plain strings such as "A11, A12".
+            }
+            return raw;
+        }
+        return 'No seats recorded';
     }
 
     function formatCurrency(value) {
         const amount = Number(value || 0);
         return `PHP ${amount.toLocaleString('en-PH')}`;
+    }
+
+    function getReservations() {
+        try {
+            const reservations = JSON.parse(localStorage.getItem(LS_PREFIX + 'reservations') || '[]');
+            return Array.isArray(reservations) ? reservations : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function inlineReservationId(resId) {
+        return escapeHtml(JSON.stringify(String(resId ?? '')));
     }
 
     function closeReservationDetails() {
@@ -1184,7 +1222,7 @@ CineBook Admin
     }
 
     function viewReservationDetails(resId) {
-        const reservations = JSON.parse(localStorage.getItem(LS_PREFIX + 'reservations') || '[]');
+        const reservations = getReservations();
         const reservation = reservations.find(item => String(item.id) === String(resId));
         if (!reservation) {
             alert('Reservation details were not found.');
@@ -1240,9 +1278,9 @@ CineBook Admin
     }
 
     function getReservationAction(res) {
-        const detailsButton = `<button class="btn-primary" onclick="viewReservationDetails(${res.id})">View Details</button>`;
+        const detailsButton = `<button class="btn-primary" onclick="viewReservationDetails(${inlineReservationId(res.id)})">View Details</button>`;
         if (res.status === 'pending' || res.status === 'payment_rejected') {
-            return `${detailsButton}<button class="btn-primary" onclick="payReservation(${res.id})">Pay / Upload Receipt</button>`;
+            return `${detailsButton}<button class="btn-primary" onclick="payReservation(${inlineReservationId(res.id)})">Pay / Upload Receipt</button>`;
         }
         if (res.status === 'payment_pending_review') {
             return `${detailsButton}<button class="btn-primary" disabled>Receipt Under Review</button>`;
@@ -1255,9 +1293,61 @@ CineBook Admin
         location.href = 'payment-submit.html';
     }
 
+    function renderReservationCard(res, options = {}) {
+        const status = String(res.status || 'pending');
+        return `
+            <div class="card">
+                <div class="card-title">Reservation</div>
+                <div class="movie-title">${escapeHtml(res.movie || 'Untitled movie')}</div>
+                <div class="movie-details"><strong>Seats Availed:</strong> ${escapeHtml(formatReservationSeats(res))}</div>
+                ${res.showtime ? `<div class="movie-details"><strong>Theater:</strong> ${escapeHtml(res.showtime.theater || 'Not recorded')}</div>` : ''}
+                ${res.showtime ? `<div class="movie-details"><strong>Showtime:</strong> ${escapeHtml(res.showtime.dateTime || 'Not recorded')}</div>` : ''}
+                <div class="price">PHP ${escapeHtml(Number(res.price || 0).toLocaleString('en-PH'))}</div>
+                <span class="status-badge ${getReservationStatusClass(status)}">${escapeHtml(status.replace(/_/g, ' '))}</span>
+                ${getPaymentInstructions(res)}
+                <div class="button-group">
+                    ${getReservationAction(res)}
+                    ${options.allowCancel && status !== 'confirmed' ? `<button class="btn-danger" onclick="cancelReservation(${inlineReservationId(res.id)})">Cancel</button>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
     function loadTabContent(tabName) {
-        const reservations = JSON.parse(localStorage.getItem(LS_PREFIX + 'reservations') || '[]');
+        const reservations = getReservations();
         const payments = JSON.parse(localStorage.getItem(LS_PREFIX + 'payments') || '[]');
+
+        if (tabName === 'overview') {
+            const recentRes = document.getElementById('recentReservations');
+            if (!recentRes) return;
+            if (reservations.length === 0) {
+                recentRes.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">No records</div>
+                        <p>No reservations yet. Start booking movies!</p>
+                    </div>
+                `;
+            } else {
+                recentRes.innerHTML = reservations.slice(-3).reverse().map(res => renderReservationCard(res)).join('');
+            }
+            return;
+        }
+
+        if (tabName === 'reservations') {
+            const resList = document.getElementById('reservationsList');
+            if (!resList) return;
+            if (reservations.length === 0) {
+                resList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">No records</div>
+                        <p>No reservations found</p>
+                    </div>
+                `;
+            } else {
+                resList.innerHTML = reservations.map(res => renderReservationCard(res, { allowCancel: true })).join('');
+            }
+            return;
+        }
 
         if (tabName === 'overview') {
             const recentRes = document.getElementById('recentReservations');
@@ -1341,8 +1431,8 @@ CineBook Admin
 
     function cancelReservation(resId) {
         if (confirm('Are you sure you want to cancel this reservation?')) {
-            let reservations = JSON.parse(localStorage.getItem(LS_PREFIX + 'reservations') || '[]');
-            reservations = reservations.filter(r => r.id !== resId);
+            let reservations = getReservations();
+            reservations = reservations.filter(r => String(r.id) !== String(resId));
             localStorage.setItem(LS_PREFIX + 'reservations', JSON.stringify(reservations));
             alert('Reservation cancelled!');
             loadTabContent('reservations');

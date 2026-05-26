@@ -406,8 +406,8 @@ let lastEmailError = '';
 
                 const movieKey = toFileName(selected.title || movieTitle) || movieTitle;
                 createSeats(movieKey);
-                // Load showtimes for this movie
-                loadShowtimesForMovie(selected.title || movieTitle);
+                // Load theaters and showtimes for this movie.
+                loadShowtimesForMovie(selected);
                 return;
             }
         }
@@ -416,7 +416,7 @@ let lastEmailError = '';
         if (synopsisEl) synopsisEl.textContent = '';
         if (posterEl) posterEl.src = PLACEHOLDER_POSTER;
         createSeats(); // fallback
-        loadShowtimesForMovie(movieTitle);
+        loadShowtimesForMovie({ title: movieTitle });
     }
 
     // --- Showtime & Theater Selection ---
@@ -435,12 +435,82 @@ let lastEmailError = '';
         return Math.max(totalSeats - bookedSeats.size, 0);
     }
     
-    function loadShowtimesForMovie(movieTitle) {
-        // Get all showtimes and theaters
+    function getMovieTitle(movie) {
+        return typeof movie === 'string' ? movie : (movie && movie.title) || '';
+    }
+
+    function showtimeBelongsToMovie(showtime, movie) {
+        const movieTitle = getMovieTitle(movie).toLowerCase();
+        const movieId = movie && typeof movie === 'object' ? String(movie.id || '') : '';
+        const showtimeMovieId = String(showtime.movieId || '');
+        const showtimeMovieTitle = String(showtime.movie || showtime.movieTitle || '').toLowerCase();
+        return (movieId && showtimeMovieId === movieId) || (movieTitle && showtimeMovieTitle === movieTitle);
+    }
+
+    function getDefaultBookingTheaters() {
+        return [
+            { id: 'screen_1', name: 'Screen 1', totalSeats: THEATER_LAYOUT_SEATS, availableSeats: THEATER_LAYOUT_SEATS, seatPrice: 200 },
+            { id: 'screen_2', name: 'Screen 2', totalSeats: THEATER_LAYOUT_SEATS, availableSeats: THEATER_LAYOUT_SEATS, seatPrice: 220 },
+            { id: 'screen_3', name: 'Screen 3', totalSeats: THEATER_LAYOUT_SEATS, availableSeats: THEATER_LAYOUT_SEATS, seatPrice: 250 }
+        ];
+    }
+
+    function formatDateOffset(daysFromToday) {
+        const date = new Date();
+        date.setDate(date.getDate() + daysFromToday);
+        return date.toISOString().slice(0, 10);
+    }
+
+    function ensureEveryMovieHasBookingOptions() {
+        const movies = getMovieSource();
+        if (!Array.isArray(movies) || movies.length === 0) return;
+
+        let theaters = JSON.parse(localStorage.getItem('cinebook:admin:theaters') || '[]');
+        let showtimes = JSON.parse(localStorage.getItem('cinebook:admin:showtimes') || '[]');
+        let changed = false;
+
+        if (!Array.isArray(theaters) || theaters.length === 0) {
+            theaters = getDefaultBookingTheaters();
+            localStorage.setItem('cinebook:admin:theaters', JSON.stringify(theaters));
+            changed = true;
+        }
+
+        const timeSlots = ['10:00', '14:00', '18:00'];
+        movies.forEach((movie, movieIndex) => {
+            const normalizedMovie = {
+                ...movie,
+                id: movie.id ? String(movie.id) : `movie_${movieIndex + 1}`
+            };
+            const hasShowtime = showtimes.some(showtime => showtimeBelongsToMovie(showtime, normalizedMovie));
+            if (hasShowtime) return;
+
+            theaters.slice(0, 3).forEach((theater, theaterIndex) => {
+                const time = timeSlots[theaterIndex % timeSlots.length];
+                showtimes.push({
+                    id: `auto_${normalizedMovie.id}_${theater.id}_${theaterIndex + 1}`,
+                    movieId: normalizedMovie.id,
+                    movieTitle: normalizedMovie.title,
+                    theaterId: theater.id,
+                    theaterName: theater.name,
+                    date: formatDateOffset(theaterIndex + 1),
+                    time
+                });
+            });
+            changed = true;
+        });
+
+        if (changed) {
+            localStorage.setItem('cinebook:admin:showtimes', JSON.stringify(showtimes));
+        }
+    }
+
+    function loadShowtimesForMovie(movie) {
+        const movieTitle = getMovieTitle(movie);
+        ensureEveryMovieHasBookingOptions();
         const showtimes = JSON.parse(localStorage.getItem('cinebook:admin:showtimes') || '[]');
         const theaters = JSON.parse(localStorage.getItem('cinebook:admin:theaters') || '[]');
-        
-        const movieShowtimes = showtimes.filter(s => ((s.movie || s.movieTitle || '').toLowerCase() === movieTitle.toLowerCase()));
+
+        const movieShowtimes = showtimes.filter(s => showtimeBelongsToMovie(s, movie));
         
         // Show theater section
         document.getElementById('theaterSection').style.display = 'block';
@@ -1460,6 +1530,7 @@ CineBook Admin
 
         // Ensures the booking flow has theater and showtime records on first run.
         seedDefaultAdminTheatersAndShowtimes();
+        ensureEveryMovieHasBookingOptions();
         
         // Update user menu
         updateUserMenu();

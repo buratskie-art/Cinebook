@@ -480,7 +480,7 @@
 
             // Read file as data URL for storage
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 const paymentSubmission = {
                     id: Date.now(),
                     bookingId: parseInt(bookingId),
@@ -504,6 +504,9 @@
                 if (booking) {
                     booking.status = 'payment_pending_review';
                     booking.submissionId = paymentSubmission.id;
+                    if (window.sendPaymentSubmittedEmail) {
+                        await window.sendPaymentSubmittedEmail(booking, paymentSubmission);
+                    }
                 }
                 localStorage.setItem('cinebook:reservations', JSON.stringify(reservations));
 

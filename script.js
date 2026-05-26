@@ -1102,7 +1102,7 @@ CineBook Admin
         }
     }
 
-    function confirmBooking() {
+    async function confirmBooking() {
         if (localStorage.getItem(LS_LOGGED) !== "true") {
             alert("Login first!");
             location.href = "login.html";
@@ -1140,6 +1140,7 @@ CineBook Admin
             paymentDeadline: Date.now() + (30 * 60 * 1000), // 30 minutes from now
             status: 'pending', // pending payment
             username: localStorage.getItem(LS_USER),
+            email: getUserEmail(localStorage.getItem(LS_USER)),
             // Showtime information (specific to theater + time combination)
             showtime: {
                 id: window.selectedShowtime.id,
@@ -1157,16 +1158,76 @@ CineBook Admin
         localStorage.setItem(LS_RESERVATIONS, JSON.stringify(reservations));
         localStorage.setItem('cinebook:pendingBookingId', bookingId);
 
-        alert(`Reservation Created! (Booking ID: #${bookingId})\n\nOpen your dashboard to view payment instructions and upload your receipt.\n\nYour seats are confirmed only after admin approval.`);
+        const emailSent = await sendEmailNotification(booking);
+
+        alert(`Reservation Created! (Booking ID: #${bookingId})\n\nOpen your dashboard to view payment instructions and upload your receipt.\n\nYour seats are confirmed only after admin approval.${emailSent ? '\n\nA booking email was sent to your registered email.' : '\n\nBooking email could not be sent. Please check the Email Log and email settings.'}`);
         location.href = "dashboard.html";
     }
 
-    function sendEmailNotification(booking) {
-        return false;
+    async function sendEmailNotification(booking) {
+        const recipient = booking.email || getUserEmail(booking.username);
+        if (!recipient) return false;
+
+        return sendCineBookEmail({
+            id: Date.now(),
+            to: recipient,
+            subject: `CineBook Booking Created - #${booking.id}`,
+            body: `
+Dear ${booking.username || 'CineBook customer'},
+
+Your CineBook reservation was created and is waiting for payment.
+
+=== BOOKING DETAILS ===
+Booking ID: #${booking.id}
+Movie: ${booking.movie}
+${booking.showtime ? `Theater: ${booking.showtime.theater}
+Showtime: ${booking.showtime.dateTime}` : ''}
+Seats: ${Array.isArray(booking.seats) ? booking.seats.join(', ') : ''}
+Total Amount: PHP ${booking.price}
+
+Please open your dashboard, upload your GCash receipt, and wait for admin approval. Your seats are held while payment is pending.
+
+Thank you!
+CineBook Admin
+            `,
+            sentAt: new Date().toLocaleString(),
+            status: 'queued',
+            type: 'booking_created',
+            bookingId: booking.id
+        });
     }
 
-    function sendPaymentSubmittedEmail(booking, submission) {
-        return false;
+    async function sendPaymentSubmittedEmail(booking, submission) {
+        const recipient = booking.email || getUserEmail(booking.username);
+        if (!recipient) return false;
+
+        return sendCineBookEmail({
+            id: Date.now(),
+            to: recipient,
+            subject: `CineBook Payment Submitted - Booking #${booking.id}`,
+            body: `
+Dear ${booking.username || 'CineBook customer'},
+
+We received your payment proof for Booking #${booking.id}. An admin will review it before your seats are confirmed.
+
+=== PAYMENT SUBMISSION ===
+Movie: ${booking.movie}
+Amount: PHP ${booking.price}
+Reference Number: ${submission.referenceNumber || 'Not provided'}
+Sender Name: ${submission.senderName || 'Not provided'}
+Submitted At: ${submission.submittedAt}
+
+You will receive an official receipt by email after admin approval.
+
+Thank you!
+CineBook Admin
+            `,
+            sentAt: new Date().toLocaleString(),
+            status: 'queued',
+            type: 'payment_submitted',
+            bookingId: booking.id,
+            submissionId: submission.id
+        });
     }
 
     // Show login popover (keeps signature expected by index.html). Simple redirect for now.
@@ -1727,10 +1788,16 @@ const ADMIN_LS_MOVIES = ADMIN_LS_PREFIX + 'movies';
 const ADMIN_LS_THEATERS = ADMIN_LS_PREFIX + 'theaters';
 const ADMIN_LS_SHOWTIMES = ADMIN_LS_PREFIX + 'showtimes';
 
-function getRecipientEmail(username) {
+function getRecipientEmail(usernameOrBooking) {
+    if (usernameOrBooking && typeof usernameOrBooking === 'object') {
+        const bookingEmail = String(usernameOrBooking.email || '').trim();
+        if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(bookingEmail)) return bookingEmail;
+        usernameOrBooking = usernameOrBooking.username;
+    }
+
     const savedEmail = String(localStorage.getItem('cinebook:email') || '').trim();
     if (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(savedEmail)) return savedEmail;
-    const user = String(username || '').trim();
+    const user = String(usernameOrBooking || '').trim();
     if (!user) return '';
     return user.includes('@') ? user : `${user}@student.edu`;
 }
@@ -2558,7 +2625,7 @@ function reviewPaymentSubmission(submissionId, bookingId) {
     document.body.insertAdjacentHTML('beforeend', modal);
 }
 
-function approvePaymentSubmission(submissionId, bookingId) {
+async function approvePaymentSubmission(submissionId, bookingId) {
     if (!confirm('Approve this payment? The booking will be confirmed and seats locked.')) return;
     
     let submissions = JSON.parse(localStorage.getItem('cinebook:paymentSubmissions') || '[]');
@@ -2615,10 +2682,11 @@ function approvePaymentSubmission(submissionId, bookingId) {
     payments.push(payment);
     localStorage.setItem('cinebook:payments', JSON.stringify(payments));
 
+    let emailSent = true;
     if (typeof window.sendCineBookEmail === 'function') {
-        window.sendCineBookEmail({
+        emailSent = await window.sendCineBookEmail({
             id: Date.now() + 1,
-            to: getRecipientEmail(booking.username),
+            to: getRecipientEmail(booking),
             subject: `CineBook Receipt - Booking #${booking.id}`,
             body: `
 Dear ${booking.username || 'CineBook customer'},
@@ -2648,7 +2716,9 @@ CineBook Admin
         });
     }
     
-    alert('Payment approved. Booking confirmed.');
+    alert(emailSent
+        ? 'Payment approved. Booking confirmed. Receipt email sent.'
+        : 'Payment approved. Booking confirmed, but the receipt email failed. Check the Email Log and Resend/Vercel environment variables.');
     closeReviewModal();
     loadPaymentsList();
 }

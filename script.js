@@ -26,6 +26,7 @@ const SEAT_ROWS_PER_BLOCK = 8;
 const SEAT_COLUMNS_PER_BLOCK = 10;
 const THEATER_LAYOUT_SEATS = SEAT_BLOCKS.length * SEAT_ROWS_PER_BLOCK * SEAT_COLUMNS_PER_BLOCK;
 const BLOCKING_SEAT_STATUSES = new Set(['pending', 'payment_pending_review', 'confirmed']);
+let lastEmailError = '';
 
     function getSeatLabel(block, row, column) {
         return `${block}${row}${column}`;
@@ -119,6 +120,7 @@ const BLOCKING_SEAT_STATUSES = new Set(['pending', 'payment_pending_review', 'co
     }
 
     async function sendCineBookEmail(emailLog) {
+        lastEmailError = '';
         const emails = JSON.parse(localStorage.getItem('cinebook:emailLog') || '[]');
         emails.push(emailLog);
         localStorage.setItem('cinebook:emailLog', JSON.stringify(emails));
@@ -146,14 +148,19 @@ const BLOCKING_SEAT_STATUSES = new Set(['pending', 'payment_pending_review', 'co
             });
             return true;
         } catch (error) {
+            lastEmailError = error.message || 'Email failed';
             updateEmailLogStatus(emailLog.id, {
                 status: 'send_failed',
-                error: error.message || 'Email failed',
+                error: lastEmailError,
                 failedAt: new Date().toLocaleString()
             });
             console.error('CineBook email failed:', error);
             return false;
         }
+    }
+
+    function getLastEmailError() {
+        return lastEmailError;
     }
 
     function getMovieSource() {
@@ -864,7 +871,8 @@ CineBook Admin
             setButtonBusy('registerSubmit', false, 'Verify & Register');
 
             if (!sent) {
-                setMessage('registerMessage', 'Could not send the OTP. Check your Resend setup in Vercel, then try again.', 'error');
+                const reason = getLastEmailError();
+                setMessage('registerMessage', `Could not send the OTP${reason ? `: ${reason}` : '. Check your Resend setup in Vercel, then try again.'}`, 'error');
                 return;
             }
 
@@ -945,7 +953,8 @@ CineBook Admin
         setButtonBusy('resetSendBtn', false, 'Send Reset Code');
 
         if (!sent) {
-            setMessage('forgotMessage', 'Could not send reset code. Check your Resend setup in Vercel, then try again.', 'error');
+            const reason = getLastEmailError();
+            setMessage('forgotMessage', `Could not send reset code${reason ? `: ${reason}` : '. Check your Resend setup in Vercel, then try again.'}`, 'error');
             return;
         }
 
@@ -1159,14 +1168,86 @@ CineBook Admin
         `;
     }
 
+    function formatReservationSeats(res) {
+        if (Array.isArray(res.seats)) return res.seats.join(', ');
+        return String(res.seats || 'No seats recorded');
+    }
+
+    function formatCurrency(value) {
+        const amount = Number(value || 0);
+        return `PHP ${amount.toLocaleString('en-PH')}`;
+    }
+
+    function closeReservationDetails() {
+        const modal = document.getElementById('reservationDetailsModal');
+        if (modal) modal.remove();
+    }
+
+    function viewReservationDetails(resId) {
+        const reservations = JSON.parse(localStorage.getItem(LS_PREFIX + 'reservations') || '[]');
+        const reservation = reservations.find(item => String(item.id) === String(resId));
+        if (!reservation) {
+            alert('Reservation details were not found.');
+            return;
+        }
+
+        closeReservationDetails();
+
+        const showtime = reservation.showtime || {};
+        const details = [
+            ['Reservation ID', reservation.id],
+            ['Movie', reservation.movie],
+            ['Seats Availed', formatReservationSeats(reservation)],
+            ['Theater', showtime.theater || reservation.theater || 'Not recorded'],
+            ['Showtime', showtime.dateTime || reservation.showtimeText || 'Not recorded'],
+            ['Status', String(reservation.status || 'pending').replace(/_/g, ' ')],
+            ['Total Amount', formatCurrency(reservation.price)],
+            ['Price Per Seat', formatCurrency(reservation.pricePerSeat)],
+            ['Booked On', reservation.createdAt || reservation.date || 'Not recorded'],
+            ['Payment Deadline', reservation.paymentDeadline || 'Not recorded'],
+            ['Paid On', reservation.paidAt || 'Not yet confirmed']
+        ];
+
+        if (reservation.referenceNumber) details.push(['Payment Reference', reservation.referenceNumber]);
+        if (reservation.senderName) details.push(['Sender Name', reservation.senderName]);
+        if (reservation.rejectionReason) details.push(['Admin Note', reservation.rejectionReason]);
+
+        const modal = document.createElement('div');
+        modal.id = 'reservationDetailsModal';
+        modal.className = 'reservation-details-modal';
+        modal.innerHTML = `
+            <div class="reservation-details-dialog" role="dialog" aria-modal="true" aria-labelledby="reservationDetailsTitle">
+                <button class="reservation-details-close" type="button" onclick="closeReservationDetails()" aria-label="Close reservation details">x</button>
+                <div class="card-title">Reservation Details</div>
+                <h2 id="reservationDetailsTitle">${escapeHtml(reservation.movie || 'CineBook Reservation')}</h2>
+                <div class="reservation-detail-grid">
+                    ${details.map(([label, value]) => `
+                        <div class="reservation-detail-item">
+                            <span>${escapeHtml(label)}</span>
+                            <strong>${escapeHtml(value)}</strong>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="button-group reservation-details-actions">
+                    <button class="btn-primary" type="button" onclick="closeReservationDetails()">Close</button>
+                </div>
+            </div>
+        `;
+        modal.addEventListener('click', event => {
+            if (event.target === modal) closeReservationDetails();
+        });
+        document.body.appendChild(modal);
+    }
+
     function getReservationAction(res) {
+        const detailsButton = `<button class="btn-primary" onclick="viewReservationDetails(${res.id})">View Details</button>`;
         if (res.status === 'pending' || res.status === 'payment_rejected') {
-            return `<button class="btn-primary" onclick="payReservation(${res.id})">Pay / Upload Receipt</button>`;
+            return `${detailsButton}<button class="btn-primary" onclick="payReservation(${res.id})">Pay / Upload Receipt</button>`;
         }
         if (res.status === 'payment_pending_review') {
-            return `<button class="btn-primary" disabled>Receipt Under Review</button>`;
+            return `${detailsButton}<button class="btn-primary" disabled>Receipt Under Review</button>`;
         }
-        return `<button class="btn-primary" onclick="alert('Viewing details for ${res.movie}')">View</button>`;
+        return detailsButton;
     }
 
     function payReservation(resId) {
@@ -1427,6 +1508,8 @@ CineBook Admin
         sendEmailNotification,
         sendPaymentSubmittedEmail,
         sendCineBookEmail,
+        viewReservationDetails,
+        closeReservationDetails,
         requestPasswordReset,
         resetPasswordWithOtp,
         toggleForgotPassword,
@@ -1463,6 +1546,8 @@ window.togglePasswordVisibility = CineBook.togglePasswordVisibility;
 window.nextSlide = CineBook.nextSlide;
 window.previousSlide = CineBook.previousSlide;
 window.sendCineBookEmail = CineBook.sendCineBookEmail;
+window.viewReservationDetails = CineBook.viewReservationDetails;
+window.closeReservationDetails = CineBook.closeReservationDetails;
 window.sendPaymentSubmittedEmail = CineBook.sendPaymentSubmittedEmail;
 window.requestPasswordReset = CineBook.requestPasswordReset;
 window.resetPasswordWithOtp = CineBook.resetPasswordWithOtp;

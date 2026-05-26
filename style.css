@@ -2347,7 +2347,7 @@ header {
 }
 
 .featured {
-    margin-top: clamp(260px, 42vw, 520px) !important;
+    margin-top: 0 !important;
 }
 
 @media (max-width: 760px) {
@@ -2357,7 +2357,7 @@ header {
     }
 
     .featured {
-        margin-top: clamp(220px, 58vw, 420px) !important;
+        margin-top: 0 !important;
     }
 }
 

@@ -6,6 +6,7 @@
         'cinebook:email',
         'cinebook:emailVerified',
         'cinebook:memberSince',
+        'cinebook:users',
         'cinebook:emailNotif',
         'cinebook:promoNotif',
         'cinebook:admin:movies',
@@ -24,12 +25,24 @@
     const DEVICE_SESSION_FIX_KEY = 'cinebook:sync:deviceSessionFixV1';
     const DEVICE_ONLY_KEYS = new Set([
         'movie',
+        'cinebook:user',
+        'cinebook:pass',
+        'cinebook:email',
+        'cinebook:emailVerified',
+        'cinebook:memberSince',
         'cinebook:loggedIn',
         'cinebook:pendingBookingId',
         'cinebook:admin:loggedIn',
         'cinebook:admin:session',
         LAST_REMOTE_UPDATED_AT,
         DEVICE_SESSION_FIX_KEY
+    ]);
+    const DEVICE_SESSION_KEYS = new Set([
+        'movie',
+        'cinebook:loggedIn',
+        'cinebook:pendingBookingId',
+        'cinebook:admin:loggedIn',
+        'cinebook:admin:session'
     ]);
 
     let applyingRemoteState = false;
@@ -44,6 +57,22 @@
         }
     }
 
+    function normalizeUsers(value) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+        if (value.username && value.password) {
+            return {
+                [String(value.username).trim().toLowerCase()]: {
+                    username: value.username,
+                    password: value.password,
+                    email: value.email || '',
+                    emailVerified: value.emailVerified || 'true',
+                    memberSince: value.memberSince || ''
+                }
+            };
+        }
+        return value;
+    }
+
     function collectLocalStorageDump() {
         const dump = {};
         for (let i = 0; i < localStorage.length; i++) {
@@ -56,15 +85,24 @@
 
     function clearSyncedDeviceSessionsOnce() {
         if (nativeGetItem.call(localStorage, DEVICE_SESSION_FIX_KEY) === 'true') return;
-        DEVICE_ONLY_KEYS.forEach((key) => {
-            if (key !== DEVICE_SESSION_FIX_KEY && key !== LAST_REMOTE_UPDATED_AT) {
-                nativeRemoveItem.call(localStorage, key);
-            }
-        });
+        DEVICE_SESSION_KEYS.forEach((key) => nativeRemoveItem.call(localStorage, key));
         nativeSetItem.call(localStorage, DEVICE_SESSION_FIX_KEY, 'true');
     }
 
     function collectLocalState() {
+        const legacyUser = {
+            username: nativeGetItem.call(localStorage, 'cinebook:user') || '',
+            password: nativeGetItem.call(localStorage, 'cinebook:pass') || '',
+            email: nativeGetItem.call(localStorage, 'cinebook:email') || '',
+            emailVerified: nativeGetItem.call(localStorage, 'cinebook:emailVerified') || '',
+            memberSince: nativeGetItem.call(localStorage, 'cinebook:memberSince') || ''
+        };
+        const users = normalizeUsers(parseJson('cinebook:users', {}));
+        if (legacyUser.username && legacyUser.password && !users[legacyUser.username.toLowerCase()]) {
+            users[legacyUser.username.toLowerCase()] = legacyUser;
+            nativeSetItem.call(localStorage, 'cinebook:users', JSON.stringify(users));
+        }
+
         return {
             movies: parseJson('cinebook:admin:movies', window.CineBookSeedData?.movies || []),
             theaters: parseJson('cinebook:admin:theaters', window.CineBookSeedData?.defaultAdminTheaters || []),
@@ -73,13 +111,7 @@
             payments: parseJson('cinebook:payments', []),
             paymentSubmissions: parseJson('cinebook:paymentSubmissions', []),
             emailLog: parseJson('cinebook:emailLog', []),
-            users: {
-                username: nativeGetItem.call(localStorage, 'cinebook:user') || '',
-                password: nativeGetItem.call(localStorage, 'cinebook:pass') || '',
-                email: nativeGetItem.call(localStorage, 'cinebook:email') || '',
-                emailVerified: nativeGetItem.call(localStorage, 'cinebook:emailVerified') || '',
-                memberSince: nativeGetItem.call(localStorage, 'cinebook:memberSince') || ''
-            },
+            users,
             preferences: {
                 emailNotif: nativeGetItem.call(localStorage, 'cinebook:emailNotif') || '',
                 promoNotif: nativeGetItem.call(localStorage, 'cinebook:promoNotif') || ''
@@ -119,11 +151,7 @@
             nativeSetItem.call(localStorage, 'cinebook:emailLog', JSON.stringify(next.emailLog || []));
 
             if (next.users) {
-                if (next.users.username) nativeSetItem.call(localStorage, 'cinebook:user', next.users.username);
-                if (next.users.password) nativeSetItem.call(localStorage, 'cinebook:pass', next.users.password);
-                if (next.users.email) nativeSetItem.call(localStorage, 'cinebook:email', next.users.email);
-                if (next.users.emailVerified) nativeSetItem.call(localStorage, 'cinebook:emailVerified', next.users.emailVerified);
-                if (next.users.memberSince) nativeSetItem.call(localStorage, 'cinebook:memberSince', next.users.memberSince);
+                nativeSetItem.call(localStorage, 'cinebook:users', JSON.stringify(normalizeUsers(next.users)));
             }
 
             if (next.preferences) {

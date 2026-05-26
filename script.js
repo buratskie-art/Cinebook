@@ -109,6 +109,61 @@ let lastEmailError = '';
         return user.includes('@') ? user : '';
     }
 
+    function getStoredUsers() {
+        try {
+            const users = JSON.parse(localStorage.getItem(LS_PREFIX + 'users') || '{}');
+            return users && typeof users === 'object' && !Array.isArray(users) ? users : {};
+        } catch {
+            return {};
+        }
+    }
+
+    function saveStoredUsers(users) {
+        localStorage.setItem(LS_PREFIX + 'users', JSON.stringify(users || {}));
+    }
+
+    function normalizeUserKey(username) {
+        return String(username || '').trim().toLowerCase();
+    }
+
+    function findStoredUser(loginValue) {
+        const login = normalizeUserKey(loginValue);
+        const users = getStoredUsers();
+        return Object.values(users).find((account) => {
+            const username = normalizeUserKey(account.username);
+            const email = normalizeUserKey(account.email);
+            return username === login || email === login;
+        }) || null;
+    }
+
+    function setCurrentUserSession(account) {
+        localStorage.setItem(LS_USER, account.username || '');
+        localStorage.setItem(LS_PASS, account.password || '');
+        localStorage.setItem(LS_EMAIL, account.email || '');
+        localStorage.setItem(LS_EMAIL_VERIFIED, account.emailVerified || 'true');
+        localStorage.setItem(LS_PREFIX + 'memberSince', account.memberSince || new Date().toLocaleDateString());
+    }
+
+    function migrateLegacyUserToUsers() {
+        const username = localStorage.getItem(LS_USER) || '';
+        const password = localStorage.getItem(LS_PASS) || '';
+        const email = localStorage.getItem(LS_EMAIL) || '';
+        if (!username || !password) return;
+
+        const users = getStoredUsers();
+        const key = normalizeUserKey(username);
+        if (!users[key]) {
+            users[key] = {
+                username,
+                password,
+                email,
+                emailVerified: localStorage.getItem(LS_EMAIL_VERIFIED) || 'true',
+                memberSince: localStorage.getItem(LS_PREFIX + 'memberSince') || new Date().toLocaleDateString()
+            };
+            saveStoredUsers(users);
+        }
+    }
+
     function getBookingRecipientEmail(booking) {
         const bookingEmail = String((booking && booking.email) || '').trim();
         if (isValidEmail(bookingEmail)) return bookingEmail;
@@ -944,6 +999,17 @@ CineBook Admin
             return;
         }
 
+        migrateLegacyUserToUsers();
+        const existingUsers = getStoredUsers();
+        const existingAccount = Object.values(existingUsers).find((account) => {
+            return normalizeUserKey(account.username) === normalizeUserKey(user) ||
+                normalizeUserKey(account.email) === normalizeUserKey(email);
+        });
+        if (existingAccount) {
+            setMessage('registerMessage', 'That username or email is already registered. Please log in instead.', 'error');
+            return;
+        }
+
         const pending = JSON.parse(sessionStorage.getItem('cinebook:pendingRegistration') || 'null');
         const now = Date.now();
         if (!pending || pending.email !== email || pending.username !== user || now > pending.expiresAt) {
@@ -979,11 +1045,17 @@ CineBook Admin
             return;
         }
 
-        localStorage.setItem(LS_USER, user);
-        localStorage.setItem(LS_PASS, pass);
-        localStorage.setItem(LS_EMAIL, email);
-        localStorage.setItem(LS_EMAIL_VERIFIED, 'true');
-        localStorage.setItem(LS_PREFIX + 'memberSince', new Date().toLocaleDateString());
+        const users = getStoredUsers();
+        const account = {
+            username: user,
+            password: pass,
+            email,
+            emailVerified: 'true',
+            memberSince: new Date().toLocaleDateString()
+        };
+        users[normalizeUserKey(user)] = account;
+        saveStoredUsers(users);
+        setCurrentUserSession(account);
         sessionStorage.removeItem('cinebook:pendingRegistration');
         alert("Registered!");
         location.href = "login.html";
@@ -1000,16 +1072,19 @@ CineBook Admin
             startAdminSession(user);
             alert("Admin login success!");
             location.href = "admin-dashboard.html";
-        } else if (user === localStorage.getItem(LS_USER) &&
-            pass === localStorage.getItem(LS_PASS) &&
-            localStorage.getItem(LS_EMAIL_VERIFIED) === 'true') {
-            localStorage.setItem(LS_LOGGED, "true");
-            alert("Login Success!");
-            location.href = "index.html";
-        } else if (user === localStorage.getItem(LS_USER) && localStorage.getItem(LS_EMAIL_VERIFIED) !== 'true') {
-            alert("Please verify your email before logging in.");
         } else {
-            alert("Invalid login");
+            migrateLegacyUserToUsers();
+            const account = findStoredUser(user);
+            if (account && pass === account.password && account.emailVerified === 'true') {
+                setCurrentUserSession(account);
+                localStorage.setItem(LS_LOGGED, "true");
+                alert("Login Success!");
+                location.href = "index.html";
+            } else if (account && account.emailVerified !== 'true') {
+                alert("Please verify your email before logging in.");
+            } else {
+                alert("Invalid login");
+            }
         }
     }
 
@@ -1023,15 +1098,16 @@ CineBook Admin
     async function requestPasswordReset() {
         const emailEl = document.getElementById('resetEmail');
         const email = emailEl ? emailEl.value.trim().toLowerCase() : '';
-        const savedEmail = (localStorage.getItem(LS_EMAIL) || '').toLowerCase();
+        migrateLegacyUserToUsers();
+        const account = Object.values(getStoredUsers()).find((item) => normalizeUserKey(item.email) === email);
 
         if (!isValidEmail(email)) {
             setMessage('forgotMessage', 'Enter the verified email for your account.', 'error');
             return;
         }
 
-        if (!savedEmail || email !== savedEmail) {
-            setMessage('forgotMessage', 'That email does not match an existing verified CineBook account on this browser.', 'error');
+        if (!account) {
+            setMessage('forgotMessage', 'That email does not match an existing verified CineBook account.', 'error');
             return;
         }
 
@@ -1077,7 +1153,16 @@ CineBook Admin
             return;
         }
 
-        localStorage.setItem(LS_PASS, newPassword);
+        const users = getStoredUsers();
+        const account = Object.values(users).find((item) => normalizeUserKey(item.email) === normalizeUserKey(pending.email));
+        if (account) {
+            account.password = newPassword;
+            users[normalizeUserKey(account.username)] = account;
+            saveStoredUsers(users);
+            if (normalizeUserKey(localStorage.getItem(LS_USER)) === normalizeUserKey(account.username)) {
+                setCurrentUserSession(account);
+            }
+        }
         sessionStorage.removeItem('cinebook:passwordReset');
         setMessage('forgotMessage', 'Password updated. You can now log in.', 'success');
     }
@@ -1600,6 +1685,7 @@ CineBook Admin
         if (window.CineBookDataSync) {
             await window.CineBookDataSync.ready;
         }
+        migrateLegacyUserToUsers();
 
         // Ensures the booking flow has theater and showtime records on first run.
         seedDefaultAdminTheatersAndShowtimes();

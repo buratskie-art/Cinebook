@@ -21,6 +21,16 @@
     const nativeRemoveItem = Storage.prototype.removeItem;
     const nativeGetItem = Storage.prototype.getItem;
     const LAST_REMOTE_UPDATED_AT = 'cinebook:sync:lastRemoteUpdatedAt';
+    const DEVICE_SESSION_FIX_KEY = 'cinebook:sync:deviceSessionFixV1';
+    const DEVICE_ONLY_KEYS = new Set([
+        'movie',
+        'cinebook:loggedIn',
+        'cinebook:pendingBookingId',
+        'cinebook:admin:loggedIn',
+        'cinebook:admin:session',
+        LAST_REMOTE_UPDATED_AT,
+        DEVICE_SESSION_FIX_KEY
+    ]);
 
     let applyingRemoteState = false;
     let syncTimer = null;
@@ -38,10 +48,20 @@
         const dump = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (CINEBOOK_KEYS.has(key) || key === LAST_REMOTE_UPDATED_AT) continue;
+            if (CINEBOOK_KEYS.has(key) || DEVICE_ONLY_KEYS.has(key)) continue;
             dump[key] = nativeGetItem.call(localStorage, key);
         }
         return dump;
+    }
+
+    function clearSyncedDeviceSessionsOnce() {
+        if (nativeGetItem.call(localStorage, DEVICE_SESSION_FIX_KEY) === 'true') return;
+        DEVICE_ONLY_KEYS.forEach((key) => {
+            if (key !== DEVICE_SESSION_FIX_KEY && key !== LAST_REMOTE_UPDATED_AT) {
+                nativeRemoveItem.call(localStorage, key);
+            }
+        });
+        nativeSetItem.call(localStorage, DEVICE_SESSION_FIX_KEY, 'true');
     }
 
     function collectLocalState() {
@@ -113,7 +133,7 @@
 
             if (next.localStorage && typeof next.localStorage === 'object') {
                 Object.entries(next.localStorage).forEach(([key, value]) => {
-                    if (value !== undefined && value !== null) {
+                    if (!DEVICE_ONLY_KEYS.has(key) && value !== undefined && value !== null) {
                         nativeSetItem.call(localStorage, key, String(value));
                     }
                 });
@@ -152,13 +172,15 @@
 
     Storage.prototype.setItem = function (key, value) {
         nativeSetItem.call(this, key, value);
-        if (this === localStorage && (key.startsWith('cinebook:') || key === 'movie' || CINEBOOK_KEYS.has(key))) scheduleSync(`set:${key}`);
+        if (this === localStorage && !DEVICE_ONLY_KEYS.has(key) && (key.startsWith('cinebook:') || CINEBOOK_KEYS.has(key))) scheduleSync(`set:${key}`);
     };
 
     Storage.prototype.removeItem = function (key) {
         nativeRemoveItem.call(this, key);
-        if (this === localStorage && (key.startsWith('cinebook:') || key === 'movie' || CINEBOOK_KEYS.has(key))) scheduleSync(`remove:${key}`);
+        if (this === localStorage && !DEVICE_ONLY_KEYS.has(key) && (key.startsWith('cinebook:') || CINEBOOK_KEYS.has(key))) scheduleSync(`remove:${key}`);
     };
+
+    clearSyncedDeviceSessionsOnce();
 
     const ready = fetch(API_URL)
         .then((response) => {

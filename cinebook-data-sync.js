@@ -20,6 +20,7 @@
     const nativeSetItem = Storage.prototype.setItem;
     const nativeRemoveItem = Storage.prototype.removeItem;
     const nativeGetItem = Storage.prototype.getItem;
+    const LAST_REMOTE_UPDATED_AT = 'cinebook:sync:lastRemoteUpdatedAt';
 
     let applyingRemoteState = false;
     let syncTimer = null;
@@ -37,6 +38,7 @@
         const dump = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
+            if (CINEBOOK_KEYS.has(key) || key === LAST_REMOTE_UPDATED_AT) continue;
             dump[key] = nativeGetItem.call(localStorage, key);
         }
         return dump;
@@ -133,7 +135,11 @@
             throw new Error(detail || 'MongoDB sync failed.');
         }
 
-        return response.json();
+        const payload = await response.json();
+        if (payload.updatedAt) {
+            nativeSetItem.call(localStorage, LAST_REMOTE_UPDATED_AT, payload.updatedAt);
+        }
+        return payload;
     }
 
     function scheduleSync(source) {
@@ -166,14 +172,13 @@
                 return value && typeof value === 'object' && Object.keys(value).length > 0;
             });
 
-            if (hasMeaningfulLocalData()) {
-                return pushState(hasRemoteData ? 'local-overrides-remote' : 'initial-local-seed');
-            }
-
             if (hasRemoteData) {
                 applyState(state);
+                if (payload.updatedAt) {
+                    nativeSetItem.call(localStorage, LAST_REMOTE_UPDATED_AT, payload.updatedAt);
+                }
             } else {
-                return pushState('initial-seed');
+                return pushState(hasMeaningfulLocalData() ? 'initial-local-seed' : 'initial-seed');
             }
         })
         .catch(() => {});

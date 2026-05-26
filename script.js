@@ -1766,15 +1766,45 @@ function saveAdminMovies(movieList) {
     }
 }
 
-function readFileAsDataUrl(file) {
+async function syncAdminData(source) {
+    if (!window.CineBookDataSync || typeof window.CineBookDataSync.pushState !== 'function') {
+        return true;
+    }
+
+    try {
+        await window.CineBookDataSync.pushState(source);
+        return true;
+    } catch {
+        alert('Saved in this browser, but MongoDB sync failed. Check your internet connection and Vercel environment variables.');
+        return false;
+    }
+}
+
+function compressPosterFile(file) {
     return new Promise((resolve, reject) => {
         if (!file) {
             resolve('');
             return;
         }
+
         const reader = new FileReader();
-        reader.onload = (event) => resolve(event.target.result);
         reader.onerror = () => reject(new Error('Unable to read poster file.'));
+        reader.onload = () => {
+            const image = new Image();
+            image.onerror = () => reject(new Error('Unable to process poster image.'));
+            image.onload = () => {
+                const maxWidth = 900;
+                const maxHeight = 1350;
+                const scale = Math.min(1, maxWidth / image.width, maxHeight / image.height);
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(image.width * scale));
+                canvas.height = Math.max(1, Math.round(image.height * scale));
+                const context = canvas.getContext('2d');
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', 0.82));
+            };
+            image.src = reader.result;
+        };
         reader.readAsDataURL(file);
     });
 }
@@ -1797,7 +1827,7 @@ async function addMovie() {
     const defaultPoster = 'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22600%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%221a1a1a%22/%3E%3C/svg%3E';
     let uploadedPoster = '';
     try {
-        uploadedPoster = await readFileAsDataUrl(posterFile);
+        uploadedPoster = await compressPosterFile(posterFile);
     } catch (error) {
         alert(error.message);
         return;
@@ -1817,6 +1847,8 @@ async function addMovie() {
                 poster: poster || allMovies[movieIndex].poster || defaultPoster
             };
             saveAdminMovies(allMovies);
+            const synced = await syncAdminData('admin-movie-update');
+            if (!synced) return;
             alert('Movie updated successfully!');
             clearMovieForm();
             loadMoviesList();
@@ -1837,6 +1869,8 @@ async function addMovie() {
 
     allMovies.push(newMovie);
     saveAdminMovies(allMovies);
+    const synced = await syncAdminData('admin-movie-add');
+    if (!synced) return;
     
     alert('Movie added successfully!');
     clearMovieForm();
